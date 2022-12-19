@@ -35,4 +35,5 @@ build:
     - npm install
     - npm run build
   only:
+    - master
     - merge_requests
