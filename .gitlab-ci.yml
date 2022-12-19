@@ -1,0 +1,36 @@
+stages:
+  - analyze
+  - test
+  - build
+
+linter:
+  stage: analyze
+  allow_failure: false
+  image: node
+  script:
+    - npm install
+    - npm run lint
+
+formatter:
+  stage: analyze
+  allow_failure: false
+  image: node
+  script:
+    - npm install
+    - npm run format
+
+test:
+  stage: test
+  allow_failure: false
+  image: node
+  script:
+    - npm install
+    - npm run test
+
+build:
+  stage: build
+  allow_failure: false
+  image: node
+  script:
+    - npm install
+    - npm run build
