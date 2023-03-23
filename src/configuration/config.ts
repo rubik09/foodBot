@@ -27,7 +27,5 @@ export default (): any => ({
   },
   HTTP_PORT: parseInt(process.env.HTTP_PORT),
   LOG_LEVEL: process.env.LOG_LEVEL || logger.LogLevels.INFO,
-  ERROR_LOG_FILE: process.env.ERROR_LOG_FILE,
-  COMBINED_LOG_FILE: process.env.COMBINED_LOG_FILE,
   SECRET_JWT: process.env.SECRET_JWT,
 });
