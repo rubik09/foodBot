@@ -2,6 +2,10 @@ variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
   DOCKER_TLS_CERTDIR: '/certs'
 
+before_script:
+  - echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/" > .npmrc
+  - echo "//fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
+
 stages:
   - analyze
   - test

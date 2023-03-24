@@ -23,6 +23,7 @@
     "update-changelog": "node .gitlab/scripts/gitlab-changelog.js"
   },
   "dependencies": {
+    "@1win/cdp-backend-tools": "*",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^9.0.0",
