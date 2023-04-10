@@ -48,6 +48,7 @@ build:
 build-push-docker-image-job:
   image: docker:stable
   stage: build
+  before_script: []
   only:
     - tags
   # Specify an additional image 'docker:dind' ("Docker-in-Docker") that
@@ -56,5 +57,5 @@ build-push-docker-image-job:
     - docker:dind
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $IMAGE_TAG .
+    - docker build --no-cache --build-arg NPM_TOKEN=${NPM_TOKEN} -t $IMAGE_TAG .
     - docker push $IMAGE_TAG

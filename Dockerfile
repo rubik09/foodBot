@@ -12,6 +12,13 @@ WORKDIR /usr/src/app
 # Copying this first prevents re-running npm install on every code change.
 COPY --chown=node:node package*.json ./
 
+# Create .npmrc file with the inserted token
+RUN printenv
+
+ARG NPM_TOKEN
+
+RUN echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/" > .npmrc && echo "//fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
+
 # Install app dependencies using the `npm ci` command instead of `npm install`
 RUN npm ci
 
@@ -41,6 +48,11 @@ RUN npm run build
 
 # Set NODE_ENV environment variable
 ENV NODE_ENV production
+
+# Create .npmrc file with the inserted token
+ARG NPM_TOKEN
+
+RUN echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/" > .npmrc && echo "//fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
 
 # Running `npm ci` removes the existing node_modules directory and passing in --only=production ensures that only the production dependencies are installed. This ensures that the node_modules directory is as optimized as possible
 RUN npm ci --only=production && npm cache clean --force
