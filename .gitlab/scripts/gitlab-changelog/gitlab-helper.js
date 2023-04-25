@@ -1,5 +1,3 @@
-const axios = require('axios');
-
 class GitlabHelper {
   constructor(config) {
     if (!config || !config.CI_API_V4_URL || !config.CI_PROJECT_ID || !config.GITLAB_PROJECT_ACCESS_TOKEN) {
@@ -11,11 +9,15 @@ class GitlabHelper {
     this.commitSha = config.COMMIT_SHA;
   }
 
-  requestToGitlab(url) {
-    return axios({
-      url,
+  async requestToGitlab(url) {
+    const res = await fetch(url, {
       headers: { 'PRIVATE-TOKEN': this.gitlabAccessToken },
     });
+    if (res.ok) {
+      return res.json();
+    } else {
+      throw new Error(`Request to ${url} failed`, res);
+    }
   }
 
   async getCommitDetails() {
@@ -34,7 +36,7 @@ class GitlabHelper {
       };
     }
     const url = `${this.gitlabUrl}/merge_requests/${mergeNumber}`;
-    const { data: info } = await this.requestToGitlab(url);
+    const info = await this.requestToGitlab(url);
     const author = info.assignee
         ? { name: info.assignee.name, link: info.assignee.web_url }
         : { name: info.author.name, link: info.author.web_url }
@@ -49,7 +51,7 @@ class GitlabHelper {
 
   async getTagDetails() {
     const url = `${this.gitlabUrl}/repository/tags/${this.ciCommitTag}`;
-    const { data: info } = await this.requestToGitlab(url);
+    const info = await this.requestToGitlab(url);
     return {
       message: info.message,
     };
@@ -61,8 +63,7 @@ class GitlabHelper {
       return;
     }
     const url = `${this.gitlabUrl}/repository/commits/${this.commitSha}`;
-    const { data: commit } = await this.requestToGitlab(url);
-    this.commitInfo = commit;
+    this.commitInfo = await this.requestToGitlab(url);
   }
 
   async getProjectInfo() {
@@ -70,7 +71,7 @@ class GitlabHelper {
       this.projectInfo = {};
       return;
     }
-    const { data: info } = await this.requestToGitlab(this.gitlabUrl);
+    const info = await this.requestToGitlab(this.gitlabUrl);
     this.projectInfo = {
       url: info.web_url,
       fullProjectName: info.path_with_namespace,
