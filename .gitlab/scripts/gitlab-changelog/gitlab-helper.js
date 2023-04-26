@@ -1,6 +1,6 @@
 class GitlabHelper {
   constructor(config) {
-    if (!config || !config.CI_API_V4_URL || !config.CI_PROJECT_ID || !config.GITLAB_PROJECT_ACCESS_TOKEN) {
+    if (!config?.CI_API_V4_URL || !config?.CI_PROJECT_ID || !config?.GITLAB_PROJECT_ACCESS_TOKEN) {
       throw new Error('Not full config on class initialize');
     }
     this.gitlabUrl = `${config.CI_API_V4_URL}/projects/${config.CI_PROJECT_ID}`;
