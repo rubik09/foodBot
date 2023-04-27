@@ -33,12 +33,7 @@ const gitlabHelper = new GitlabHelper({
 })
 
 async function index() {
-    await gitlabHelper.getCommitInfo();
-    await gitlabHelper.getProjectInfo();
-
-    const details = CI_COMMIT_TAG
-        ? await gitlabHelper.getTagDetails()
-        : await gitlabHelper.getCommitDetails();
+    const details = await gitlabHelper.getDetails();
 
     const changelogEntry = templateHelper.prepareCommitEntry(details);
     await gitHelper.pull();

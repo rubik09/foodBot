@@ -20,6 +20,18 @@ class GitlabHelper {
     }
   }
 
+  async getDetails() {
+    if (this.ciCommitTag) {
+      return this.getTagDetails();
+    } else {
+      await Promise.all([
+        this.getProjectInfo(),
+        this.getCommitInfo(),
+      ]);
+      return this.getCommitDetails();
+    }
+  }
+
   async getCommitDetails() {
     const commit = this.commitInfo;
     const mergeNumber = commit.message.split(`See merge request ${this.projectInfo.fullProjectName}!`)[1]?.split(' ')?.[0];
@@ -58,19 +70,11 @@ class GitlabHelper {
   }
 
   async getCommitInfo() {
-    if (this.ciCommitTag) {
-      this.commitInfo = {};
-      return;
-    }
     const url = `${this.gitlabUrl}/repository/commits/${this.commitSha}`;
     this.commitInfo = await this.requestToGitlab(url);
   }
 
   async getProjectInfo() {
-    if (this.ciCommitTag) {
-      this.projectInfo = {};
-      return;
-    }
     const info = await this.requestToGitlab(this.gitlabUrl);
     this.projectInfo = {
       url: info.web_url,
