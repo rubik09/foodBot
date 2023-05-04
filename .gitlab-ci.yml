@@ -3,8 +3,6 @@ variables:
   DOCKER_TLS_CERTDIR: '/certs'
 
 before_script:
-  - echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1443/packages/npm/" > .npmrc
-  - echo "//fbet-gitlab.ex2b.co/api/v4/projects/1443/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
   - echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/" > .npmrc
   - echo "//fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
   - apt-get update -y && apt-get install -yqqf openssh-client git unzip sshpass rsync --fix-missing
