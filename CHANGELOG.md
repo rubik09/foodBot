@@ -1,6 +1,8 @@
 
 # -- Unreleased --
 
+- (10-05-2023) [Commit: ci fix](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/commit/829bb72af9a0b39f27442613be453637633a4b11)<br />ci fix
+<br />[Alexey Ivanov](https://fbet-gitlab.ex2b.co/alexey.ivanov)<br />
 - (10-05-2023) [Commit: ci fix](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/commit/bd1f9af247906ebb7cd6aac98f489294ddd579bb)<br />ci fix
 <br />[Alexey Ivanov](https://fbet-gitlab.ex2b.co/alexey.ivanov)<br />
 - (10-05-2023) [Commit: ci fix](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/commit/d6970c744d34d215327ae2eb946e7c5b3bd63855)<br />ci fix
