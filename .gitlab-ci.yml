@@ -17,7 +17,7 @@ linter:
   allow_failure: false
   image: node
   script:
-    - npm install
+    - npm ci
     - npm run lint
 
 formatter:
@@ -25,7 +25,7 @@ formatter:
   allow_failure: false
   image: node
   script:
-    - npm install
+    - npm ci
     - npm run format
 
 test:
@@ -33,7 +33,7 @@ test:
   allow_failure: false
   image: node
   script:
-    - npm install
+    - npm ci
     - npm run test
 
 build:
@@ -43,7 +43,7 @@ build:
     - tags
   image: node
   script:
-    - npm install
+    - npm ci
     - npm run build
 
 build-push-docker-image-job:
