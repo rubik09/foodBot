@@ -11,6 +11,8 @@ stages:
   - analyze
   - test
   - build
+  - create_docs
+  - export_docs
 
 linter:
   stage: analyze
@@ -106,3 +108,51 @@ tagfixed:
   script:
     - git remote rm origin && git remote add origin git@$CI_SERVER_HOST:$CI_PROJECT_PATH.git
     - CI_COMMIT_TAG=$CI_COMMIT_TAG CI_API_V4_URL=$CI_API_V4_URL CI_PROJECT_ID=$CI_PROJECT_ID GITLAB_PROJECT_ACCESS_TOKEN=$GITLAB_PROJECT_ACCESS_TOKEN CI_DEFAULT_BRANCH=$CI_DEFAULT_BRANCH node ./.gitlab/scripts/gitlab-changelog
+
+create_architecture_scheme:
+  stage: create_docs
+  allow_failure: true
+  image: node:18
+  artifacts:
+    paths:
+      - documentation/graph/dependencies.svg
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH'
+  script: 
+    - rm -rf documentation
+    - "npx @compodoc/compodoc -p tsconfig.build.json -a . --hideGenerator"
+
+move_docfiles:
+  stage: export_docs
+  image: node:18
+  variables:
+    DEPS_GRAPH_FILENAME: "resources/dependencies.svg" 
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH'
+  script:
+    # make store artifacts
+    - mkdir /docs/
+    - mv documentation/graph/dependencies.svg /docs/dependencies.svg
+    # trigger
+    # clone this project's wiki under /tmp
+    # Note: The bot user (Project Access Token) isn't actually needed for the clone
+    #       operation as this could be done with CI_JOB_TOKEN. But using the
+    #       bot user-scoped URL at clone-time saves us from having to update
+    #       the push URL later.
+    - export WIKI_URL="${CI_SERVER_PROTOCOL}://project_${CI_PROJECT_ID}_bot:${BOT_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.wiki.git"
+    - rm -rf "/tmp/${CI_PROJECT_NAME}.wiki"
+    - cd /tmp
+    - git clone "${WIKI_URL}"
+
+    # enter the cloned repo
+    - cd "${CI_PROJECT_NAME}.wiki"
+
+    # update resources files
+    - cat /docs/dependencies.svg > "$DEPS_GRAPH_FILENAME"
+
+    # set committer info
+    - git config user.name "$GITLAB_USER_NAME"
+    - git config user.email "$GITLAB_USER_EMAIL"
+
+    # commit the file
+    - (git add  "$DEPS_GRAPH_FILENAME" && git commit -m "Auto-updated dependecy graph & openapi spec in CI" && git push origin "HEAD:master") || echo 0
