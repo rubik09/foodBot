@@ -1,6 +1,8 @@
 
 # -- Unreleased --
 
+- (18-05-2023) [Merge Request: Update 2 files](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/merge_requests/9)<br />- /.gitlab-ci.yml
+- /package.json<br />[Лев Мельник](https://fbet-gitlab.ex2b.co/lev.melnik)<br />
 - (10-05-2023) [Commit: ci fix](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/commit/829bb72af9a0b39f27442613be453637633a4b11)<br />ci fix
 <br />[Alexey Ivanov](https://fbet-gitlab.ex2b.co/alexey.ivanov)<br />
 - (10-05-2023) [Commit: ci fix](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/commit/bd1f9af247906ebb7cd6aac98f489294ddd579bb)<br />ci fix
