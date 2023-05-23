@@ -1,6 +1,7 @@
 
 # -- Unreleased --
 
+- (23-05-2023) [Merge Request: Resolve "CDP-1224 Включить строгую типизацию в проекте"](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/merge_requests/8)<br />Closes #2<br />[Alexey Ivanov](https://fbet-gitlab.ex2b.co/alexey.ivanov)<br />
 - (18-05-2023) [Merge Request: Update 2 files](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/merge_requests/9)<br />- /.gitlab-ci.yml
 - /package.json<br />[Лев Мельник](https://fbet-gitlab.ex2b.co/lev.melnik)<br />
 - (10-05-2023) [Commit: ci fix](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/commit/829bb72af9a0b39f27442613be453637633a4b11)<br />ci fix
