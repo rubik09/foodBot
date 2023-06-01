@@ -8,6 +8,7 @@ export default (): any => ({
   TCP_TRANSPORT_OPTIONS: {
     retryAttempts: parseInt(process.env.TCP_RETRY_ATTEMPTS),
     retryDelay: parseInt(process.env.TCP_RETRY_DELAY),
+    host: process.env.TCP_HOST,
     port: parseInt(process.env.TCP_PORT),
   },
   RMQ_TRANSPORT_OPTIONS: {
