@@ -1,6 +1,7 @@
 
 # -- Unreleased --
 
+- (01-06-2023) [Merge Request: add host to config](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/merge_requests/10)<br />Closes #000<br />[Рустам Рамазанов](https://fbet-gitlab.ex2b.co/rustam.ramazanov)<br />
 - (23-05-2023) [Merge Request: Resolve "CDP-1224 Включить строгую типизацию в проекте"](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/merge_requests/8)<br />Closes #2<br />[Alexey Ivanov](https://fbet-gitlab.ex2b.co/alexey.ivanov)<br />
 - (18-05-2023) [Merge Request: Update 2 files](https://fbet-gitlab.ex2b.co/cdp/backend-microservices/nest-microservice-template/-/merge_requests/9)<br />- /.gitlab-ci.yml
 - /package.json<br />[Лев Мельник](https://fbet-gitlab.ex2b.co/lev.melnik)<br />
