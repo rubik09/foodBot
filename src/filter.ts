@@ -6,7 +6,6 @@ const exceptionFilter = errors.exceptionFilter;
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = logger.createLogger(config());
   catch(exceptions: any) {
-    // choose handleExceptionForTcp or handleExceptionForHttp here in terms of which transport is main for end user of service
-    return exceptionFilter.catchHelper(exceptions, exceptionFilter.handleExceptionForTcp, this.logger);
+    return exceptionFilter.catchHelper(exceptions, exceptionFilter.handleExceptionForRmq, this.logger);
   }
 }

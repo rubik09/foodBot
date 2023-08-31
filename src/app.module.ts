@@ -8,7 +8,12 @@ import config from './configuration/config';
 import { GlobalExceptionFilter } from './filter';
 
 @Module({
-  imports: [ConfigModule.forRoot()],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [config],
+    }),
+  ],
   controllers: [AppController],
   providers: [
     AppService,

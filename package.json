@@ -23,12 +23,14 @@
     "update-changelog": "node .gitlab/scripts/gitlab-changelog.js"
   },
   "dependencies": {
-    "@1win/cdp-backend-tools": "*",
+    "@1win/cdp-backend-tools": "1.0.27",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^9.0.0",
-    "@nestjs/microservices": "^9.2.1",
+    "@nestjs/microservices": "9.3.12",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/swagger": "^7.1.8",
+    "amqp-connection-manager": "4.1.14",
     "class-transformer": "^0.5.1",
     "nest-winston": "^1.8.0",
     "winston": "^3.8.2"
