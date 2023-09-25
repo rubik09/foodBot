@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { interceptors, logger } from '@1win/cdp-backend-tools';
+import { logger } from '@1win/cdp-backend-tools';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import config from './configuration/config';
@@ -7,7 +7,6 @@ import * as packageJson from 'package.json';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { writeFileSync } from 'fs';
-import { Transport } from '@nestjs/microservices';
 
 const swaggerCfg = new DocumentBuilder()
   .setTitle(packageJson.name)
@@ -19,8 +18,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: logger.createLogger(config()),
   });
-
-  app.useGlobalInterceptors(new interceptors.RpcLogInterceptor(), new interceptors.RabbitAckInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -46,23 +43,9 @@ async function bootstrap() {
     console.log(`${__dirname}`);
     process.exit(0);
   }
-
-  const RMQ_TRANSPORT_OPTIONS = configService.get('app-config.RMQ_TRANSPORT_OPTIONS');
-  app.connectMicroservice(
-    {
-      transport: Transport.RMQ,
-      options: RMQ_TRANSPORT_OPTIONS,
-    },
-    {
-      inheritAppConfig: true,
-    },
-  );
-
   const DOCS_URL = configService.get('app-config.DOCS_URL');
 
   SwaggerModule.setup(`${API_PREFIX}${DOCS_URL}`, app, document);
-
-  await app.startAllMicroservices();
 
   const HTTP_PORT = configService.get('app-config.HTTP_PORT');
   await app.listen(HTTP_PORT);

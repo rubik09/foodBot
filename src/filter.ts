@@ -5,7 +5,7 @@ const exceptionFilter = errors.exceptionFilter;
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = logger.createLogger(config());
-  catch(exceptions: any) {
-    return exceptionFilter.catchHelper(exceptions, exceptionFilter.handleExceptionForRmq, this.logger);
+  catch(exceptions: any, host: any) {
+    return exceptionFilter.catchHelper(exceptions, exceptionFilter.handleExceptionForHttp, this.logger, host);
   }
 }
