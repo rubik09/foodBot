@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import config from './configuration/config';
 import { GlobalExceptionFilter } from './filter';
 import { HealthModule } from './health/health.module';
+import { UpdateModule } from './update/update.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { HealthModule } from './health/health.module';
       load: [config],
     }),
     HealthModule,
+    UpdateModule,
   ],
   controllers: [AppController],
   providers: [
