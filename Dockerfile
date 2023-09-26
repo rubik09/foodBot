@@ -28,6 +28,8 @@ COPY --chown=node:node . .
 # Use the node user from the image (instead of the root user)
 USER node
 
+CMD ["node", "NODE_ENV=development nest start --watch"]
+
 ###################
 # BUILD FOR PRODUCTION
 ###################
@@ -58,6 +60,8 @@ RUN echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1306/packag
 RUN npm ci --only=production && npm cache clean --force
 
 USER node
+
+CMD ["node", "dist/src/main"]
 
 ###################
 # PRODUCTION
