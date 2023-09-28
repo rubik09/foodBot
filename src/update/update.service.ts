@@ -15,7 +15,8 @@ export class UpdateService {
       if (!langMap.has(lang)) throw new Error(JSON.stringify(errors.wrongLang.text));
       else {
         const res = await loadBtns(langMap.get(lang));
-        await this.buttonModel.deleteMany();
+        res.forEach((el) => (el.language = lang));
+        await this.buttonModel.deleteMany({ language: lang });
         await this.buttonModel.insertMany(res);
         return JSON.stringify({ msg: 'success update' });
       }
