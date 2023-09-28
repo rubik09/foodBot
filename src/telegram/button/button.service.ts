@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Button } from './button.model';
 
-
 @Injectable()
 export class ButtonService {
   constructor(@InjectModel('Button') private readonly buttonModel: Model<Button>) {}
@@ -13,11 +12,6 @@ export class ButtonService {
   }
   async getButtonByName(button: string): Promise<Button | null> {
     return await this.buttonModel.findOne({ button });
-  }
-
-
-  async getAllButtons(): Promise<Button[] | null> {
-    return await this.buttonModel.find({});
   }
 
   async generateRegex(path: string = ''): Promise<RegExp> {
@@ -37,59 +31,52 @@ export class ButtonService {
     }
   }
 
-  async findButtonsByPath(path: string): Promise<Button[]> {
-    const regex = await this.generateRegex(path)
-    const buttons = await this.buttonModel.find({ path: { $regex: regex } }).exec();
-
-    return buttons;
-  }
-
-  async findButtonsByPath2(path: string): Promise<{ text: string }[][]> {
+  async findButtonsByPath(path: string): Promise<{ text: string }[][]> {
     const mainActions = [
       {
-        'back': {
-          button: "Назад",
-          action: "back",
+        back: {
+          button: 'Назад',
+          action: 'back',
         },
       },
       {
-        'support': {
-          button : "Написать в поддержку",
-          action: "support",
+        support: {
+          button: 'Написать в поддержку',
+          action: 'support',
         },
       },
       {
-        'greeting': {
-          button : "Спасибо что помогли",
-          action: "greeting",
+        greeting: {
+          button: 'Спасибо, что помогли',
+          action: 'greeting',
         },
       },
       {
-        'begin': {
-          button : "В начало",
-          action: "begin",
+        begin: {
+          button: 'В начало',
+          action: 'begin',
         },
-      }
+      },
     ];
- 
-    const regex = await this.generateRegex(path)
+
+    const regex = await this.generateRegex(path);
     const buttons = await this.buttonModel.find({ path: { $regex: regex } }).exec();
 
-    const buttonArray = buttons.map(item => item.button);
-    if (buttonArray.includes('{{mainActions}}')){
-    const mainButtons = mainActions.map(item => Object.values(item)[0].button);
-    buttonArray.pop()
-    buttonArray.push(...mainButtons)
+    const buttonArray = buttons.map((item) => item.button);
+    if (buttonArray.includes('{{mainActions}}')) {
+      const mainButtons = mainActions.map((item) => Object.values(item)[0].button);
+      buttonArray.pop();
+      buttonArray.push(...mainButtons);
     }
-    if (buttonArray.includes('{{back}}')){
-    const index = buttonArray.indexOf('{{back}}')
-    buttonArray[index] = mainActions[0].back.button
+    if (buttonArray.includes('{{back}}')) {
+      const index = buttonArray.indexOf('{{back}}');
+      buttonArray[index] = mainActions[0].back.button;
     }
-    if (buttonArray.includes('{{support}}')){
-      const index = buttonArray.indexOf('{{support}}')
-      buttonArray[index] = 'Написать в поддержку'
+    if (buttonArray.includes('{{support}}')) {
+      const index = buttonArray.indexOf('{{support}}');
+      buttonArray[index] = 'Написать в поддержку';
     }
-    const result = await this.addButtonsToKeyboard(buttonArray, 1)
+    const result = await this.addButtonsToKeyboard(buttonArray, 1);
     return result;
   }
   async groupBy<T>(items: T[], n: number): Promise<T[][]> {
@@ -100,10 +87,12 @@ export class ButtonService {
     }
     return groups;
   }
-  
+
   async addButtonsToKeyboard(arr: string[], amountButtonsPerLine: number): Promise<{ text: string }[][]> {
-    const keyboardButtons = await this.groupBy(arr.map(item => ({ text: item })), amountButtonsPerLine);
+    const keyboardButtons = await this.groupBy(
+      arr.map((item) => ({ text: item })),
+      amountButtonsPerLine,
+    );
     return keyboardButtons;
   }
-  
 }

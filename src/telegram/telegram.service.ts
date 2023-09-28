@@ -11,6 +11,19 @@ export class TelegramService {
     this.bot = new TelegramBot('6604969757:AAGbO8j0NY0AzndU7L0DEqiZyga8rH4KEeE', { polling: true });
   }
 
+  async sendLangKeyboard(chatId: number) {
+    this.bot.sendMessage(chatId, 'Choose your language:', {
+      reply_markup: {
+        keyboard: [
+          //@ts-ignore
+          ['Русский', 'English'],
+        ],
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
+    });
+  }
+
   async sendMessageAndKeyboard(chatId: number, text: string, buttons: { text: string }[][]) {
     this.bot.sendMessage(chatId, text, {
       reply_markup: {
@@ -21,8 +34,8 @@ export class TelegramService {
     });
   }
 
-  async returnMainMenu(chatId: number, text: string = 'Главное меню⬇️') {
-    const buttons = await this.buttonService.findButtonsByPath2('');
+  async returnMainMenu(chatId: number, text: string = '⬇️Выберите нужный раздел⬇️') {
+    const buttons = await this.buttonService.findButtonsByPath('');
     this.bot.sendMessage(chatId, text, {
       reply_markup: {
         keyboard: buttons,
@@ -35,24 +48,30 @@ export class TelegramService {
   async begin(msg: any) {
     await this.userService.saveState(msg.from.id, '');
     await this.returnMainMenu(msg.from.id);
-  };
+  }
 
   async back(msg: any) {
     const userId = msg.from.id;
     const state = await this.userService.getState(userId);
     let path = await this.buttonService.correctPath(state);
     await this.userService.saveState(userId, path);
-    const buttons = await this.buttonService.findButtonsByPath2(path);
+    const buttons = await this.buttonService.findButtonsByPath(state);
 
-    const buttonPrev = await this.buttonService.getButton(path)
+    const buttonPrev = await this.buttonService.getButton(state);
 
-    this.sendMessageAndKeyboard(userId.toString(), (buttonPrev?.button || 'Главное меню⬇️'), buttons);
-  };
+    this.sendMessageAndKeyboard(userId.toString(), buttonPrev?.button || '⬇️Выберите нужный раздел⬇️', buttons);
+  }
+
   async support(msg: any) {
     const userId = msg.from.id;
-    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало'], 1);
-    this.sendMessageAndKeyboard(userId.toString(), 'Наш самый ТОПовый менеджер готов помочь вам здесь - @official_kk_1win', buttons);
+    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало', 'Назад'], 1);
+    this.sendMessageAndKeyboard(
+      userId.toString(),
+      'Наш самый ТОПовый менеджер готов помочь вам здесь - @official_kk_1win',
+      buttons,
+    );
   }
+
   async greeting(msg: any) {
     const userId = msg.from.id;
     const buttons = await this.buttonService.addButtonsToKeyboard(['В начало'], 1);
@@ -63,104 +82,76 @@ export class TelegramService {
     this.bot.onText(/\/start/, async (msg: any) => {
       const userId = msg.from.id;
       const user = await this.userService.getUser(userId);
-      if (user) {
-
-        // const state = await this.userService.getState(userId);
-        // const buttons = await this.buttonService.findButtonsByPath2(state);
-        this.returnMainMenu(userId);
-        // this.sendMessageAndKeyboard(chatId, 'Привет', buttons)
-      } else {
-        this.bot.sendMessage(userId, 'Выберите язык:', {
-          reply_markup: {
-            keyboard: [
-              //@ts-ignore
-              ['Русский', 'English'],
-            ],
-            one_time_keyboard: true,
-            resize_keyboard: true,
-          },
-        });
+      if (!user) {
+        const username = msg.from.username || '';
+        await this.userService.createUser(userId, username);
+        await this.sendLangKeyboard(userId);
       }
-    });
-
-    this.bot.onText(/^(Русский|English)$/, async (msg, match) => {
-      const langMap = {
-        'Русский': 'geoRu',
-        'English': 'geoGB'
-      }
-      const userId = msg.chat.id;
-      const user = msg.from;
-      const langCode = langMap[match[1] as keyof typeof langMap]
-      const username = user.username || '';
-
-      await this.userService.createUser(user.id, username, langCode);
-
-      this.bot.sendMessage(userId, `${match[1]} ✅`);
-      this.returnMainMenu(userId);
     });
 
     this.bot.on('message', async (msg: any) => {
       const mainActions = [
         {
-          'back': {
-            button: "Назад",
-            action: (msg: any) => this.back(msg)
+          back: {
+            button: 'Назад',
+            action: (msg: any) => this.back(msg),
           },
         },
         {
-          'support': {
-            button: "Написать в поддержку",
-            action: (msg: any) => this.support(msg)
+          support: {
+            button: 'Написать в поддержку',
+            action: (msg: any) => this.support(msg),
           },
         },
         {
-          'greeting': {
-            button: "Спасибо что помогли",
-            action: (msg: any) => this.greeting(msg)
+          greeting: {
+            button: 'Спасибо, что помогли',
+            action: (msg: any) => this.greeting(msg),
           },
         },
         {
-          'begin': {
-            button: "В начало",
-            action: (msg: any) => this.begin(msg)
+          begin: {
+            button: 'В начало',
+            action: (msg: any) => this.begin(msg),
           },
-        }
+        },
       ];
-      const message = msg.text.toString()
+      const langMap = {
+        Русский: 'geoRu',
+        English: 'geoGB',
+      };
+      const message = msg.text.toString();
       const user = msg.from;
-      const foundAction = mainActions.find(action => Object.values(action)[0]?.button === message);
-      if (foundAction) {
-        //@ts-ignore
-        await foundAction[(Object.keys(foundAction))].action(msg)
-        return
+
+      const userDB = await this.userService.getUser(user.id);
+      if (!userDB) return;
+
+      const state = await this.userService.getState(user.id);
+      if (state === 'lang') {
+        if (langMap[message as keyof typeof langMap]) {
+          const langCode = langMap[message as keyof typeof langMap];
+          await this.userService.saveLanguage(user.id, langCode);
+          this.bot.sendMessage(user.id, `${message} ✅`);
+          return await this.returnMainMenu(user.id);
+        } else {
+          this.bot.sendMessage(user.id, `Language not found🚫`);
+          return await this.sendLangKeyboard(user.id);
+        }
       }
 
-      // const userId = msg.from.id;
-      // const state = await this.userService.getState(userId);
-      // const buttons2 = await this.buttonService.findButtonsByPath2(state);
-      // console.log(buttons2, state)
-      // const textExists = buttons2.some((row) => {
-      //   return row.some(async (button) => {
-      //     console.log(button.text, message, button.text === message)
-      //     if(button.text === message){
-      //       let button3 = await this.buttonService.getButtonByName(message);
-      //       await this.userService.saveState(user.id, button3.path);
-      //       const buttons = await this.buttonService.findButtonsByPath2(button3.path);
-      //       await this.sendMessageAndKeyboard(msg.from.id, button.text, buttons);
-      //     } else {
-      //       await this.returnMainMenu(msg.chat.id)
-      //     }
-      //   });
-      // });
-      // console.log(textExists)
+      const foundAction = mainActions.find((action) => Object.values(action)[0]?.button === message);
+      if (foundAction) {
+        //@ts-ignore
+        await foundAction[Object.keys(foundAction)].action(msg);
+        return;
+      }
 
-      let button = await this.buttonService.getButtonByName(message); // проверка в монге есть ли кнока с текстом
+      let button = await this.buttonService.getButtonByName(message);
       if (button) {
-        const { text, path } = button
+        const { text, path } = button;
         await this.userService.saveState(user.id, path);
-        const buttons = await this.buttonService.findButtonsByPath2(path);
+        const buttons = await this.buttonService.findButtonsByPath(path);
         this.sendMessageAndKeyboard(msg.from.id, text, buttons);
-
       }
     });
   }
