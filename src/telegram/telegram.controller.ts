@@ -1,22 +1,21 @@
-// telegram.controller.ts
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { UserService } from './user/user.service';
+import { Controller, Get, HttpStatus } from '@nestjs/common';
 import { TelegramService } from './telegram.service';
+import { ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('telegram')
 @Controller('telegram')
 export class TelegramController {
-  constructor(
-    private readonly userService: UserService,
-    private readonly telegramService: TelegramService,
-  ) {}
+  constructor(private readonly telegramService: TelegramService) {}
 
   @Get()
+  @ApiOperation({ description: 'Bot endpoint' })
+  @ApiOkResponse()
+  @ApiInternalServerErrorResponse()
   async handleGetUpdates(): Promise<any> {
-    return this.telegramService.handleUpdates();
-  }
-
-  @Post()
-  async handlePostUpdates(@Body() body: any): Promise<any> {
-    return this.telegramService.handleUpdates();
+    const result = await this.telegramService.handleUpdates();
+    return {
+      status: HttpStatus.OK,
+      description: 'Bot is running',
+    };
   }
 }

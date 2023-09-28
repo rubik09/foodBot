@@ -8,7 +8,7 @@ export class TelegramService {
   private readonly bot: TelegramBot;
 
   constructor(private readonly userService: UserService, private readonly buttonService: ButtonService) {
-    this.bot = new TelegramBot('5463463420:AAFu6BZVpx98b3dzkQR7skbGGZxhz_-tCCk', { polling: true });
+    this.bot = new TelegramBot('6604969757:AAGbO8j0NY0AzndU7L0DEqiZyga8rH4KEeE', { polling: true });
   }
 
   async sendLangKeyboard(userId: number) {
@@ -52,10 +52,10 @@ export class TelegramService {
   }
 
   async back(msg: any) {
-    const userId = msg.from.id;
-    const userDB = await this.userService.getUser(userId);
+    const userId = msg.from.id; 
+    let userDB = await this.userService.getUser(userId);
     let path = await this.buttonService.correctPath(userDB.state);
-    await this.userService.saveState(userId, path);
+    userDB = await this.userService.saveState(userId, path);
     const buttons = await this.buttonService.findButtonsByPath(userDB.state, userDB.language);
 
     const buttonPrev = await this.buttonService.getButton(userDB.state);
@@ -65,7 +65,7 @@ export class TelegramService {
 
   async support(msg: any) {
     const userId = msg.from.id;
-    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало', 'Назад'], 1);
+    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало'], 1);
     this.sendMessageAndKeyboard(
       userId.toString(),
       'Наш самый ТОПовый менеджер готов помочь вам здесь - @official_kk_1win',
@@ -147,6 +147,7 @@ export class TelegramService {
       }
 
       let button = await this.buttonService.getButtonByName(message);
+      console.log(button, button.path);
       if (button) {
         const { text, path } = button;
         await this.userService.saveState(user.id, path);
