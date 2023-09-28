@@ -12,7 +12,7 @@ export class UpdateService {
 
   async updateBotStructure(lang: string | string[] | undefined) {
     if (typeof lang === 'string') {
-      if (!langMap.has(lang)) throw new Error(JSON.stringify(errors.wrongLang));
+      if (!langMap.has(lang)) throw new Error(JSON.stringify(errors.wrongLang.text));
       else {
         const res = await loadBtns(langMap.get(lang));
         await this.buttonModel.deleteMany();
