@@ -1,7 +1,7 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Button } from './button.model';
+import { Button } from '../schemas/button.schema';
 
 @Injectable()
 export class ButtonService {
