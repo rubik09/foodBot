@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type ButtonDocument = HydratedDocument<Button>;
 
-@Schema({ collection: `buttons` })
+@Schema({ collection: `geoRu` })
 export class Button {
   @Prop({ required: true })
   button: string;
