@@ -12,6 +12,12 @@ export class TelegramService {
     this.bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
   }
 
+  async increaseState(userTelegramId: number) {
+    let userData = await this.userService.getUser(userTelegramId);
+    let path = await this.buttonService.correctPath(userData.state, true);
+    await this.userService.saveState(userTelegramId, path);
+  }
+
   async sendLangKeyboard(userTelegramId: number) {
     this.bot.sendMessage(userTelegramId, 'Choose your language:', {
       reply_markup: {
@@ -70,7 +76,8 @@ export class TelegramService {
 
   async support(msg: Message) {
     const userTelegramId = msg.from.id;
-    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало'], 1);
+    await this.increaseState(userTelegramId)
+    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало', 'Назад'], 1);
     this.sendMessageAndKeyboard(
       userTelegramId,
       'Наш самый ТОПовый менеджер готов помочь вам здесь - @official_kk_1win',
@@ -80,7 +87,8 @@ export class TelegramService {
 
   async greeting(msg: Message) {
     const userTelegramId = msg.from.id;
-    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало'], 1);
+    await this.increaseState(userTelegramId)
+    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало', 'Назад'], 1);
     this.sendMessageAndKeyboard(userTelegramId, 'Спасибо, что обратились к нам!\nЖелаем удачных ставок🖤', buttons);
   }
 
