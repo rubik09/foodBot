@@ -22,7 +22,10 @@ export class ButtonService {
     }
   }
 
-  async correctPath(path: string = ''): Promise<string> {
+  async correctPath(path: string = '', increase: boolean = false): Promise<string> {
+    if (increase) {
+        return `${path}-00`
+    }
     if (path.length <= 2) {
       return '';
     } else {
