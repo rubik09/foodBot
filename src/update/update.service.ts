@@ -21,7 +21,8 @@ export class UpdateService {
       }
     } else {
       return JSON.stringify({
-        message: 'please provide language, route for updating all or several languages, will be implemented soon',
+        message:
+          'please provide language. Route for updating all or several languages, will be implemented soon or not, by safety reasons',
       });
     }
   }

@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type ButtonDocument = HydratedDocument<Button>;
 
-@Schema({ collection: `testRu` })
+@Schema({ collection: `buttons` })
 export class Button {
   @Prop({ required: true })
   button: string;
