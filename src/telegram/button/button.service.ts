@@ -66,7 +66,6 @@ export class ButtonService {
         path: { $regex: regex },
       })
       .exec();
-    console.log(buttons);
 
     const buttonArray = buttons.map((item) => item.button);
     if (buttonArray.includes('{{mainActions}}')) {
@@ -81,6 +80,14 @@ export class ButtonService {
     if (buttonArray.includes('{{support}}')) {
       const index = buttonArray.indexOf('{{support}}');
       buttonArray[index] = 'Написать в поддержку';
+    }
+    if (buttonArray.includes('{{begin}}')) {
+      const index = buttonArray.indexOf('{{begin}}');
+      buttonArray[index] = 'В начало';
+    }
+    if (buttonArray.includes('{{greeting}}')) {
+      const index = buttonArray.indexOf('{{greeting}}');
+      buttonArray[index] = 'Спасибо, что помогли';
     }
     const result = await this.addButtonsToKeyboard(buttonArray, 1);
     return result;

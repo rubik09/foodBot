@@ -8,7 +8,7 @@ export class TelegramService {
   private readonly bot: TelegramBot;
 
   constructor(private readonly userService: UserService, private readonly buttonService: ButtonService) {
-    this.bot = new TelegramBot('6604969757:AAGbO8j0NY0AzndU7L0DEqiZyga8rH4KEeE', { polling: true });
+    this.bot = new TelegramBot('5463463420:AAFu6BZVpx98b3dzkQR7skbGGZxhz_-tCCk', { polling: true });
   }
 
   async sendLangKeyboard(userId: number) {
