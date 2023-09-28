@@ -8,6 +8,7 @@ import config from './configuration/config';
 import { GlobalExceptionFilter } from './filter';
 import { HealthModule } from './health/health.module';
 import { UpdateModule } from './update/update.module';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UpdateModule } from './update/update.module';
     }),
     HealthModule,
     UpdateModule,
+    MongooseModule.forRoot(process.env.MONGO_URL),
   ],
   controllers: [AppController],
   providers: [
