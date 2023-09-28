@@ -11,8 +11,8 @@ export class TelegramService {
     this.bot = new TelegramBot('6604969757:AAGbO8j0NY0AzndU7L0DEqiZyga8rH4KEeE', { polling: true });
   }
 
-  async sendLangKeyboard(chatId: number) {
-    this.bot.sendMessage(chatId, 'Choose your language:', {
+  async sendLangKeyboard(userId: number) {
+    this.bot.sendMessage(userId, 'Choose your language:', {
       reply_markup: {
         keyboard: [
           //@ts-ignore
@@ -24,8 +24,8 @@ export class TelegramService {
     });
   }
 
-  async sendMessageAndKeyboard(chatId: number, text: string, buttons: { text: string }[][]) {
-    this.bot.sendMessage(chatId, text, {
+  async sendMessageAndKeyboard(userId: number, text: string, buttons: { text: string }[][]) {
+    this.bot.sendMessage(userId, text, {
       reply_markup: {
         keyboard: buttons,
         one_time_keyboard: true,
@@ -34,9 +34,10 @@ export class TelegramService {
     });
   }
 
-  async returnMainMenu(chatId: number, text: string = '⬇️Выберите нужный раздел⬇️') {
-    const buttons = await this.buttonService.findButtonsByPath('');
-    this.bot.sendMessage(chatId, text, {
+  async returnMainMenu(userId: number, text: string = '⬇️Выберите нужный раздел⬇️') {
+    const userDB = await this.userService.getUser(userId);
+    const buttons = await this.buttonService.findButtonsByPath('', userDB.language);
+    this.bot.sendMessage(userId, text, {
       reply_markup: {
         keyboard: buttons,
         one_time_keyboard: true,
@@ -52,12 +53,12 @@ export class TelegramService {
 
   async back(msg: any) {
     const userId = msg.from.id;
-    const state = await this.userService.getState(userId);
-    let path = await this.buttonService.correctPath(state);
+    const userDB = await this.userService.getUser(userId);
+    let path = await this.buttonService.correctPath(userDB.state);
     await this.userService.saveState(userId, path);
-    const buttons = await this.buttonService.findButtonsByPath(state);
+    const buttons = await this.buttonService.findButtonsByPath(userDB.state, userDB.language);
 
-    const buttonPrev = await this.buttonService.getButton(state);
+    const buttonPrev = await this.buttonService.getButton(userDB.state);
 
     this.sendMessageAndKeyboard(userId.toString(), buttonPrev?.button || '⬇️Выберите нужный раздел⬇️', buttons);
   }
@@ -117,8 +118,8 @@ export class TelegramService {
         },
       ];
       const langMap = {
-        Русский: 'geoRu',
-        English: 'geoGB',
+        Русский: 'ru',
+        English: 'en',
       };
       const message = msg.text.toString();
       const user = msg.from;
@@ -126,8 +127,7 @@ export class TelegramService {
       const userDB = await this.userService.getUser(user.id);
       if (!userDB) return;
 
-      const state = await this.userService.getState(user.id);
-      if (state === 'lang') {
+      if (userDB.state === 'lang') {
         if (langMap[message as keyof typeof langMap]) {
           const langCode = langMap[message as keyof typeof langMap];
           await this.userService.saveLanguage(user.id, langCode);
@@ -150,7 +150,7 @@ export class TelegramService {
       if (button) {
         const { text, path } = button;
         await this.userService.saveState(user.id, path);
-        const buttons = await this.buttonService.findButtonsByPath(path);
+        const buttons = await this.buttonService.findButtonsByPath(path, userDB.language);
         this.sendMessageAndKeyboard(msg.from.id, text, buttons);
       }
     });

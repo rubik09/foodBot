@@ -31,7 +31,7 @@ export class ButtonService {
     }
   }
 
-  async findButtonsByPath(path: string): Promise<{ text: string }[][]> {
+  async findButtonsByPath(path: string, language: string): Promise<{ text: string }[][]> {
     const mainActions = [
       {
         back: {
@@ -60,7 +60,13 @@ export class ButtonService {
     ];
 
     const regex = await this.generateRegex(path);
-    const buttons = await this.buttonModel.find({ path: { $regex: regex } }).exec();
+    const buttons = await this.buttonModel
+      .find({
+        language: language,
+        path: { $regex: regex },
+      })
+      .exec();
+    console.log(buttons);
 
     const buttonArray = buttons.map((item) => item.button);
     if (buttonArray.includes('{{mainActions}}')) {
