@@ -10,7 +10,7 @@ const serviceAccountAuth = new JWT({
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
-const getCSV = async (sheetId: string, authService: JWT, pageNumber: number) => {
+const getCSV = async (sheetId: string, authService: JWT, pageNumber: number): Promise<string[][]> => {
   const doc = new GoogleSpreadsheet(sheetId, authService);
   try {
     await doc.loadInfo(); // loads document properties and worksheets
