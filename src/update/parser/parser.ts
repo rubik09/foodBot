@@ -59,8 +59,8 @@ const genPath = (arr: Array<Array<Button | null>>): Button[] => {
     for (let j = 0; j < subarr.length; j++) {
       const el = subarr[j];
       if (!el) continue;
-      el.button.trim();
-      el.text.trim();
+      el.button = el.button.trim();
+      el.text = el.text.trim();
       if (stackPath.length < j || stackPath.length === 0) {
         stackPath.push(stackPath.idx);
       } else if (stackPath.length === j) {
