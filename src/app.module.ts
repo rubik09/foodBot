@@ -38,6 +38,8 @@ import { ButtonModule } from './button/button.module';
 export class AppModule implements NestModule {
   // Remove it if your app doesn't handle http server
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(logger.LoggerMiddleware(config())).forRoutes({ path: '*', method: RequestMethod.ALL });
+    consumer.apply(logger.LoggerMiddleware(config()))
+    .exclude('health')
+    .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }

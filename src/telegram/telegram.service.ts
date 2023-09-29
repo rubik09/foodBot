@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ButtonService } from '../button/button.service';
 import { Message } from 'node-telegram-bot-api';
+import { mainActions, langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
 
 @Injectable()
@@ -104,36 +105,6 @@ export class TelegramService {
     });
 
     this.bot.on('message', async (msg: Message) => {
-      const mainActions = [
-        {
-          back: {
-            button: 'Назад',
-            action: (msg: any) => this.back(msg),
-          },
-        },
-        {
-          support: {
-            button: 'Написать в поддержку',
-            action: (msg: any) => this.support(msg),
-          },
-        },
-        {
-          greeting: {
-            button: 'Спасибо, что помогли',
-            action: (msg: any) => this.greeting(msg),
-          },
-        },
-        {
-          begin: {
-            button: 'В начало',
-            action: (msg: any) => this.begin(msg),
-          },
-        },
-      ];
-      const langMap = {
-        Русский: 'ru',
-        English: 'en',
-      };
       const message = msg.text.toString();
       const userTelegramId = msg.from.id;
 
@@ -155,7 +126,8 @@ export class TelegramService {
       const foundAction = mainActions.find((action) => Object.values(action)[0]?.button === message);
       if (foundAction) {
         //@ts-ignore
-        await foundAction[Object.keys(foundAction)].action(msg);
+        const action = foundAction[Object.keys(foundAction)];
+        await action.action.call(this, msg);
         return;
       }
       try {
