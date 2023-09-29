@@ -2,6 +2,7 @@ import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Button } from '../schemas/button.schema';
+import { mainActions } from '../utils/telegram.constants';
 
 @Injectable()
 export class ButtonService {
@@ -35,32 +36,6 @@ export class ButtonService {
   }
 
   async findButtonsByPath(path: string, language: string): Promise<{ text: string }[][]> {
-    const mainActions = [
-      {
-        back: {
-          button: 'Назад',
-          action: 'back',
-        },
-      },
-      {
-        support: {
-          button: 'Написать в поддержку',
-          action: 'support',
-        },
-      },
-      {
-        greeting: {
-          button: 'Спасибо, что помогли',
-          action: 'greeting',
-        },
-      },
-      {
-        begin: {
-          button: 'В начало',
-          action: 'begin',
-        },
-      },
-    ];
 
     const regex = await this.generateRegex(path);
     const buttons = await this.buttonModel
