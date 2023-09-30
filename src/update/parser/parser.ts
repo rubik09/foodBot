@@ -58,9 +58,15 @@ const genPath = (arr: Array<Array<Button | null>>): Button[] => {
     const subarr = arr[i];
     for (let j = 0; j < subarr.length; j++) {
       const el = subarr[j];
+
+      // check if element exist in table
       if (!el) continue;
       el.button = el.button.trim();
       el.text = el.text.trim();
+
+      //check if element not emty (el.button always should exists)
+      if (!el.button && !el.text) continue;
+
       if (stackPath.length < j || stackPath.length === 0) {
         stackPath.push(stackPath.idx);
       } else if (stackPath.length === j) {
