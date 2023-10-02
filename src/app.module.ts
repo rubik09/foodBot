@@ -12,6 +12,7 @@ import { UpdateModule } from './update/update.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { UserModule } from './user/user.module';
 import { ButtonModule } from './button/button.module';
+import { UpdateActionsModule } from './update-actions/update-actions.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { ButtonModule } from './button/button.module';
     TelegramModule,
     MongooseModule.forRoot(process.env.MONGO_URL),
     ButtonModule,
-    UserModule
+    UserModule,
+    UpdateActionsModule
   ],
   controllers: [AppController],
   providers: [
