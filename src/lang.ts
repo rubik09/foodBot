@@ -1,4 +1,4 @@
-const lang = new Map<string, number>([
+export const langArr: [string, number][] = [
   ['ru', 1],
   ['en', 2],
   ['br', 3],
@@ -7,6 +7,8 @@ const lang = new Map<string, number>([
   ['fr', 6],
   ['sp', 7],
   ['uz', 8],
-]);
+];
+
+const lang = new Map<string, number>(langArr);
 
 export default lang;

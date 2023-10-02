@@ -2,7 +2,7 @@ import { Controller, Get, HttpException, HttpStatus, Query, UseGuards } from '@n
 import { UpdateService } from './update.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 
-@Controller('update')
+@Controller('update-buttons')
 @UseGuards(AuthGuard)
 export class UpdateController {
   constructor(private updateService: UpdateService) {}

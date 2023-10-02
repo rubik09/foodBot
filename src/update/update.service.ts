@@ -1,9 +1,9 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import loadBtns from './parser/parser';
+import loadBtns from './parser';
 import langMap from 'src/lang';
-import errors from './parser/errors';
+import errors from 'src/utils/googleApi/errors';
 import { Button } from 'src/schemas/button.schema';
 
 @Injectable()
