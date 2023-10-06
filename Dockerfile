@@ -61,7 +61,6 @@ RUN npm ci --only=production && npm cache clean --force
 
 USER node
 
-CMD ["node", "dist/src/main"]
 
 ###################
 # PRODUCTION
