@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ButtonService } from '../button/button.service';
 import { Message } from 'node-telegram-bot-api';
-import { ActionType, MainActions, langMap } from '../utils/telegram.constants';
+import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
 import languageService from 'src/lang';
 @Injectable()
@@ -42,7 +42,7 @@ export class TelegramService {
     });
   }
 
-  async returnMainMenu(userTelegramId: number, text: string = '⬇️Выберите нужный раздел⬇️') {
+  async returnMainMenu(userTelegramId: number, text: string = '⬇️🏠⬇️') {
     const userData = await this.userService.getUser(userTelegramId);
     await this.userService.saveState(userTelegramId, '');
     const buttons = await this.buttonService.findButtonsByPath('', userData.language);
@@ -67,7 +67,7 @@ export class TelegramService {
       userData = await this.userService.saveState(userTelegramId, path);
       const buttons = await this.buttonService.findButtonsByPath(userData.state, lang);
       const buttonPrev = await this.buttonService.getButton(userData.state, lang);
-      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || '⬇️Выберите нужный раздел⬇️', buttons);
+      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || '⬇️🏠⬇️', buttons);
     } catch (error) {
       console.error(error);
       this.returnMainMenu(userTelegramId);
