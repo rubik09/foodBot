@@ -9,8 +9,8 @@ const actionsDict = languageService.actionsDict;
 export class ButtonService {
   constructor(@InjectModel('Button') private readonly buttonModel: Model<Button>) {}
 
-  async getButton(path: string): Promise<Button | null> {
-    return await this.buttonModel.findOne({ path });
+  async getButton(path: string, language: string): Promise<Button | null> {
+    return await this.buttonModel.findOne({ path, language });
   }
   async getButtonByName(button: string): Promise<Button | null> {
     return await this.buttonModel.findOne({ button });
@@ -44,7 +44,6 @@ export class ButtonService {
         path: { $regex: regex },
       })
       .exec();
-
     const buttonArray = buttons.map((item) => item.button);
     if (buttonArray.includes('{{mainActions}}')) {
       const mainButtons = languageService.getActionsByLang(language).map((el) => el.button);
@@ -61,14 +60,23 @@ export class ButtonService {
     }
     if (buttonArray.includes('{{begin}}')) {
       const index = buttonArray.indexOf('{{begin}}');
-      buttonArray[index] = actionsDict.get('start')[lang.get(language)].button;
+      buttonArray[index] = actionsDict.get('begin')[lang.get(language)].button;
     }
     if (buttonArray.includes('{{greeting}}')) {
       const index = buttonArray.indexOf('{{greeting}}');
-      buttonArray[index] = actionsDict.get('greeeting')[lang.get(language)].button;
+      buttonArray[index] = actionsDict.get('greeting')[lang.get(language)].button;
     }
     const result = await this.addButtonsToKeyboard(buttonArray, 1);
     return result;
+  }
+  async getButtonsByPath(path: string, language: string): Promise<Button[]> {
+    const regex = await this.generateRegex(path);
+    return await this.buttonModel
+      .find({
+        language: language,
+        path: { $regex: regex },
+      })
+      .exec();
   }
   async groupBy<T>(items: T[], n: number): Promise<T[][]> {
     const count = Math.ceil(items.length / n);

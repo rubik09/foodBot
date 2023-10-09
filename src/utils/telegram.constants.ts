@@ -30,3 +30,5 @@ export const langMap = {
   Русский: 'ru',
   English: 'en',
 };
+
+export type ActionType = 'back' | 'support' | 'greeting' | 'begin';
