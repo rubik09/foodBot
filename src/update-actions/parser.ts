@@ -1,6 +1,7 @@
 import getDataFromApi from 'src/utils/googleApi/api';
 import Action from 'src/types/action';
-import { langArr } from 'src/lang';
+import languageService from 'src/lang';
+const { langArr } = languageService;
 
 const arrToActions = (arr: string[][]): Action[] => {
   const res: Action[] = [];
