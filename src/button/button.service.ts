@@ -44,6 +44,9 @@ export class ButtonService {
         path: { $regex: regex },
       })
       .exec();
+
+    buttons.sort((a, b) => a.path.localeCompare(b.path));
+
     const buttonArray = buttons.map((item) => item.button);
     if (buttonArray.includes('{{mainActions}}')) {
       const mainButtons = languageService.getActionsByLang(language).map((el) => el.button);

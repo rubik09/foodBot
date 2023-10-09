@@ -128,10 +128,22 @@ export class TelegramService {
       const foundAction = newMainActions.find((action) => action?.button === message);
       if (foundAction) {
         try {
-          MainActions[foundAction.type as ActionType]?.(msg, userData.language);
-          return;
+          switch (foundAction.type) {
+            case 'back':
+              this.back(msg, userData.language);
+              return;
+            case 'begin':
+              this.begin(msg, userData.language);
+              return;
+            case 'support':
+              this.support(msg, userData.language);
+              return;
+            case 'greeting':
+              this.greeting(msg, userData.language);
+              return;
+          }
         } catch (error) {
-          throw new Error(error);
+          console.error(error);
         }
       }
       try {
