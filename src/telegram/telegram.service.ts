@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ButtonService } from '../button/button.service';
 import { Message } from 'node-telegram-bot-api';
-import { mainActions, langMap } from '../utils/telegram.constants';
+import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
-
+import languageService from 'src/lang';
 @Injectable()
 export class TelegramService {
   private readonly bot: TelegramBot;
 
-  constructor(private readonly buttonService: ButtonService,private readonly userService: UserService,) {
+  constructor(private readonly buttonService: ButtonService, private readonly userService: UserService) {
     this.bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
   }
 
@@ -24,7 +24,7 @@ export class TelegramService {
       reply_markup: {
         keyboard: [
           //@ts-ignore
-          ['Русский', 'English'],
+          ['Русский', 'English', 'Portuguesa'],
         ],
         one_time_keyboard: true,
         resize_keyboard: true,
@@ -42,8 +42,9 @@ export class TelegramService {
     });
   }
 
-  async returnMainMenu(userTelegramId: number, text: string = '⬇️Выберите нужный раздел⬇️') {
+  async returnMainMenu(userTelegramId: number, text: string = '⬇️🏠⬇️') {
     const userData = await this.userService.getUser(userTelegramId);
+    await this.userService.saveState(userTelegramId, '');
     const buttons = await this.buttonService.findButtonsByPath('', userData.language);
     this.bot.sendMessage(userTelegramId, text, {
       reply_markup: {
@@ -54,43 +55,43 @@ export class TelegramService {
     });
   }
 
-  async begin(msg: Message) {
-    await this.userService.saveState(msg.from.id, '');
+  async begin(msg: Message, lang: string) {
     await this.returnMainMenu(msg.from.id);
   }
 
-  async back(msg: Message) {
-    const userTelegramId = msg.from.id; 
-    try{
-    let userData = await this.userService.getUser(userTelegramId);
-    let path = await this.buttonService.correctPath(userData.state);
-    userData = await this.userService.saveState(userTelegramId, path);
-    const buttons = await this.buttonService.findButtonsByPath(userData.state, userData.language);
-    const buttonPrev = await this.buttonService.getButton(userData.state);
-    this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || '⬇️Выберите нужный раздел⬇️', buttons);
-  }
-  catch(error){
-      console.error(error)
-      this.returnMainMenu(userTelegramId)
+  async back(msg: Message, lang: string) {
+    const userTelegramId = msg.from.id;
+    try {
+      let userData = await this.userService.getUser(userTelegramId);
+      let path = await this.buttonService.correctPath(userData.state);
+      userData = await this.userService.saveState(userTelegramId, path);
+      const buttons = await this.buttonService.findButtonsByPath(userData.state, lang);
+      const buttonPrev = await this.buttonService.getButton(userData.state, lang);
+      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || '⬇️🏠⬇️', buttons);
+    } catch (error) {
+      console.error(error);
+      this.returnMainMenu(userTelegramId);
     }
   }
 
-  async support(msg: Message) {
+  async support(msg: Message, lang: string) {
     const userTelegramId = msg.from.id;
-    await this.increaseState(userTelegramId)
-    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало', 'Назад'], 1);
-    this.sendMessageAndKeyboard(
-      userTelegramId,
-      'Наш самый ТОПовый менеджер готов помочь вам здесь - @official_kk_1win',
-      buttons,
-    );
+    await this.increaseState(userTelegramId);
+    const back = languageService.getActionByLangAndType(lang, 'back');
+    const begin = languageService.getActionByLangAndType(lang, 'begin');
+    const support = languageService.getActionByLangAndType(lang, 'support');
+    const buttons = await this.buttonService.addButtonsToKeyboard([begin.button, back.button], 1);
+    this.sendMessageAndKeyboard(userTelegramId, support.text, buttons);
   }
 
-  async greeting(msg: Message) {
+  async greeting(msg: Message, lang: string) {
     const userTelegramId = msg.from.id;
-    await this.increaseState(userTelegramId)
-    const buttons = await this.buttonService.addButtonsToKeyboard(['В начало', 'Назад'], 1);
-    this.sendMessageAndKeyboard(userTelegramId, 'Спасибо, что обратились к нам!\nЖелаем удачных ставок🖤', buttons);
+    await this.increaseState(userTelegramId);
+    const back = languageService.getActionByLangAndType(lang, 'back');
+    const begin = languageService.getActionByLangAndType(lang, 'begin');
+    const greeting = languageService.getActionByLangAndType(lang, 'greeting');
+    const buttons = await this.buttonService.addButtonsToKeyboard([begin.button, back.button], 1);
+    this.sendMessageAndKeyboard(userTelegramId, greeting.text, buttons);
   }
 
   async handleUpdates(): Promise<void> {
@@ -105,7 +106,7 @@ export class TelegramService {
     });
 
     this.bot.on('message', async (msg: Message) => {
-      const message = msg.text.toString();
+      const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
 
       const userData = await this.userService.getUser(userTelegramId);
@@ -123,26 +124,43 @@ export class TelegramService {
         }
       }
 
-      const foundAction = mainActions.find((action) => Object.values(action)[0]?.button === message);
+      const newMainActions = languageService.getActionsByLang(userData.language);
+      const foundAction = newMainActions.find((action) => action?.button === message);
       if (foundAction) {
-        //@ts-ignore
-        const action = foundAction[Object.keys(foundAction)];
-        await action.action.call(this, msg);
-        return;
+        try {
+          switch (foundAction.type) {
+            case 'back':
+              this.back(msg, userData.language);
+              return;
+            case 'begin':
+              this.begin(msg, userData.language);
+              return;
+            case 'support':
+              this.support(msg, userData.language);
+              return;
+            case 'greeting':
+              this.greeting(msg, userData.language);
+              return;
+          }
+        } catch (error) {
+          console.error(error);
+        }
       }
       try {
-      let button = await this.buttonService.getButtonByName(message);
+        const currentButtons = await this.buttonService.getButtonsByPath(userData.state, userData.language);
+        const targetButton = currentButtons.find((item) => item.button === message);
 
-      if (button) {
-        const { text, path } = button;
-        await this.userService.saveState(userTelegramId, path);
-        const buttons = await this.buttonService.findButtonsByPath(path, userData.language);
-        this.sendMessageAndKeyboard(msg.from.id, text, buttons);
-      }
-    }
-    catch(error){
-        console.error(error)
-        this.returnMainMenu(userTelegramId)
+        if (targetButton) {
+          const { path, text } = targetButton;
+          await this.userService.saveState(userTelegramId, path);
+          const buttons = await this.buttonService.findButtonsByPath(path, userData.language);
+          this.sendMessageAndKeyboard(userTelegramId, text, buttons);
+        } else {
+          this.returnMainMenu(userTelegramId);
+        }
+      } catch (error) {
+        console.error(error);
+        this.returnMainMenu(userTelegramId);
       }
     });
   }

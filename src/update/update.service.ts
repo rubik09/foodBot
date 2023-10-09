@@ -1,11 +1,12 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import loadBtns from './parser/parser';
-import langMap from 'src/lang';
-import errors from './parser/errors';
+import loadBtns from './parser';
+import languageService from 'src/lang';
+import errors from 'src/utils/googleApi/errors';
 import { Button } from 'src/schemas/button.schema';
 
+const langMap = languageService.langMap;
 @Injectable()
 export class UpdateService {
   constructor(@InjectModel(Button.name) private buttonModel: Model<Button>) {}

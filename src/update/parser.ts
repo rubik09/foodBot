@@ -1,4 +1,4 @@
-import getDataFromApi from './api';
+import getDataFromApi from 'src/utils/googleApi/api';
 import Button from 'src/types/button';
 
 const arrToBtns = (arr: string[][]): Array<Array<Button | null>> => {
