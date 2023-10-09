@@ -24,7 +24,7 @@ export class TelegramService {
       reply_markup: {
         keyboard: [
           //@ts-ignore
-          ['Русский', 'English'],
+          ['Русский', 'English', 'Portuguesa'],
         ],
         one_time_keyboard: true,
         resize_keyboard: true,

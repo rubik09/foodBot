@@ -4,7 +4,7 @@ class Language {
   langArr: [string, number][] = [
     ['ru', 1],
     ['en', 2],
-    ['br', 3],
+    ['port', 3],
     ['az', 4],
     ['tr', 5],
     ['fr', 6],
