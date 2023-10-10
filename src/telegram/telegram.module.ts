@@ -1,11 +1,11 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TelegramController } from './telegram.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Button, ButtonSchema } from 'src/schemas/button.schema';
-import { User, UserSchema } from 'src/schemas/user.schema';
+import { Button, ButtonSchema } from '../schemas/button.schema';
+import { User, UserSchema } from '../schemas/user.schema';
 import { TelegramService } from './telegram.service';
-import { UserModule } from 'src/user/user.module';
-import { ButtonModule } from 'src/button/button.module';
+import { UserModule } from '../user/user.module';
+import { ButtonModule } from '../button/button.module';
 
 
 @Module({

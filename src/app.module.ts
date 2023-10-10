@@ -8,11 +8,11 @@ import { AppService } from './app.service';
 import config from './configuration/config';
 import { GlobalExceptionFilter } from './filter';
 import { HealthModule } from './health/health.module';
-import { UpdateModule } from './update/update.module';
+import { UpdateModule } from './buttonsUpdater/update.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { UserModule } from './user/user.module';
 import { ButtonModule } from './button/button.module';
-import { UpdateActionsModule } from './update-actions/update-actions.module';
+import { UpdateActionsModule } from './actionsUpdater/update-actions.module';
 
 @Module({
   imports: [

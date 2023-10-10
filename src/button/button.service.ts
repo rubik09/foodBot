@@ -2,7 +2,7 @@ import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Button } from '../schemas/button.schema';
-import languageService from 'src/lang';
+import languageService from '../lang';
 const lang = languageService.langMap;
 const actionsDict = languageService.actionsDict;
 @Injectable()

@@ -2,9 +2,9 @@ import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import loadBtns from './parser';
-import languageService from 'src/lang';
-import errors from 'src/utils/googleApi/errors';
-import { Button } from 'src/schemas/button.schema';
+import languageService from '../lang';
+import errors from '../utils/googleApi/errors';
+import { Button } from '../schemas/button.schema';
 
 const langMap = languageService.langMap;
 @Injectable()

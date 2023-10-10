@@ -4,7 +4,7 @@ import { ButtonService } from '../button/button.service';
 import { Message } from 'node-telegram-bot-api';
 import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
-import languageService from 'src/lang';
+import languageService from '../lang';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);

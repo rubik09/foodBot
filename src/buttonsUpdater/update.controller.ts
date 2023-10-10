@@ -1,6 +1,6 @@
 import { Controller, Get, HttpException, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { UpdateService } from './update.service';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('update-buttons')
 @UseGuards(AuthGuard)

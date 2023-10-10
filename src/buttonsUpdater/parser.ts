@@ -1,5 +1,5 @@
-import getDataFromApi from 'src/utils/googleApi/api';
-import Button from 'src/types/button';
+import getDataFromApi from '../utils/googleApi/api';
+import Button from '../types/button';
 
 const arrToBtns = (arr: string[][]): Array<Array<Button | null>> => {
   const res: Array<Array<Button | null>> = [];
