@@ -13,5 +13,8 @@ export default registerAs(
       HTTP_PORT: Number(process.env.HTTP_PORT),
       LOG_LEVEL: process.env.LOG_LEVEL || logger.LogLevels.INFO,
       SECRET_JWT: process.env.SECRET_JWT,
+      MONGO_URL: process.env.MONGO_URL,
+      AUTH_HEADER_SECRET: process.env.AUTH_HEADER_SECRET,
+      BOT_TOKEN: process.env.BOT_TOKEN,
     } as const),
 );

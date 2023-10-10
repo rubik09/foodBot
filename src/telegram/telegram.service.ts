@@ -5,12 +5,17 @@ import { Message } from 'node-telegram-bot-api';
 import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
 import languageService from '../lang';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
   private readonly bot: TelegramBot;
-  constructor(private readonly buttonService: ButtonService, private readonly userService: UserService) {
-    this.bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+  constructor(
+    private readonly buttonService: ButtonService,
+    private readonly userService: UserService,
+    private configService: ConfigService,
+  ) {
+    this.bot = new TelegramBot(this.configService.get('app-config.BOT_TOKEN'), { polling: true });
   }
 
   async increaseState(userTelegramId: number) {

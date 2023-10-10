@@ -38,7 +38,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, swaggerCfg);
 
-  if (process.env.CREATE_DOCS) {
+  if (configService.get('app-config.CREATE_DOCS')) {
     writeFileSync(`${__dirname}/openapi.json`, JSON.stringify(document));
     console.log(`${__dirname}`);
     process.exit(0);
