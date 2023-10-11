@@ -4,7 +4,7 @@ import { ButtonService } from '../button/button.service';
 import { Message } from 'node-telegram-bot-api';
 import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
-import languageService from '../lang';
+import languageService from '../language/language.service';
 import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class TelegramService implements OnModuleInit {
@@ -29,7 +29,7 @@ export class TelegramService implements OnModuleInit {
       reply_markup: {
         keyboard: [
           //@ts-ignore
-          ['Русский', 'English', 'Portuguesa'],
+          ['Русский', 'English', 'Portuguesa','Español'],
         ],
         one_time_keyboard: true,
         resize_keyboard: true,

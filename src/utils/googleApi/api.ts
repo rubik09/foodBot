@@ -33,6 +33,62 @@ const getCSV = async (sheetId: string, authService: JWT, pageNumber: number): Pr
   }
 };
 
+class GoogleApiService {
+  private readonly SHEET_ID: string;
+  private readonly serviceAccountAuth: JWT;
+  private readonly doc: GoogleSpreadsheet;
+
+  constructor(sheetId: string, serviceAccountAuth: JWT) {
+    this.SHEET_ID = sheetId;
+    this.serviceAccountAuth = serviceAccountAuth;
+    this.doc = new GoogleSpreadsheet(this.SHEET_ID, this.serviceAccountAuth);
+  }
+
+  init = async () => {
+    try {
+      await this.doc.loadInfo(); // loads document properties and worksheets
+    } catch {
+      throw new Error(JSON.stringify(errors.wrongCreds));
+    }
+  };
+
+  getButtons = async (pageNumber: number): Promise<string[][]> => {
+    try {
+      const sheet = this.doc.sheetsByIndex[pageNumber];
+      const rows = await sheet.getRows();
+      const result = [];
+      for (const row of rows) {
+        // @ts-ignore
+        result.push(row._rawData);
+      }
+      return result;
+    } catch {
+      throw new Error(JSON.stringify(errors.wrongLang));
+    }
+  };
+
+  getPageNames = async (): Promise<string[]> => {
+    const res: string[] = [];
+    const totalSheets = this.doc.sheetCount;
+    for (let i = 0; i < totalSheets; i++) {
+      const cur = this.doc.sheetsByIndex[i];
+      res.push(cur.a1SheetName);
+    }
+    return res;
+  };
+
+  getPageHeaders = async (pageNumber: number): Promise<string[]> => {
+    try {
+      const sheet = this.doc.sheetsByIndex[pageNumber];
+      await sheet.loadHeaderRow();
+      return sheet.headerValues;
+    } catch {
+      throw new Error(JSON.stringify(errors.wrongCreds));
+    }
+  };
+}
+
 export default async function (pageNumber: number): Promise<string[][]> {
   return getCSV(SHEET_ID, serviceAccountAuth, pageNumber);
 }
+export const googleApiService = new GoogleApiService(SHEET_ID, serviceAccountAuth);
