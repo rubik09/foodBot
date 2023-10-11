@@ -1,9 +1,11 @@
 import Action from '../types/action';
-
+import greetingMessage from './greetingMessage';
 class Language {
   langMap: Map<string, number>;
   actionsDict: Map<string, Action[]>;
-  constructor() {
+  greetingMap: Map<string, string>;
+  constructor(greetingMap: Map<string, string>) {
+    this.greetingMap = greetingMap;
     this.langMap = new Map();
     this.actionsDict = new Map([]);
   }
@@ -19,4 +21,4 @@ class Language {
   }
 }
 
-export default new Language();
+export default new Language(greetingMessage);

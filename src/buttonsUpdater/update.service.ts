@@ -46,7 +46,6 @@ export class UpdateService implements OnModuleInit {
     await googleApiService.init();
     const langs = (await googleApiService.getPageNames()).map((el) => el.toLowerCase().slice(1, -1));
     langs.forEach((lang, idx) => languageService.langMap.set(lang, idx));
-    await this.updateAllLangs();
   }
   async findAll(): Promise<any> {
     const res = await googleApiService.getPageHeaders(0);

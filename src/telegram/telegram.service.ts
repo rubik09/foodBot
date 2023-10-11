@@ -29,7 +29,7 @@ export class TelegramService implements OnModuleInit {
       reply_markup: {
         keyboard: [
           //@ts-ignore
-          ['Русский', 'English', 'Portuguesa','Español'],
+          ['Русский', 'English', 'Portuguesa', 'Español'],
         ],
         one_time_keyboard: true,
         resize_keyboard: true,
@@ -72,7 +72,7 @@ export class TelegramService implements OnModuleInit {
       userData = await this.userService.saveState(userTelegramId, path);
       const buttons = await this.buttonService.findButtonsByPath(userData.state, lang);
       const buttonPrev = await this.buttonService.getButton(userData.state, lang);
-      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || '⬇️🏠⬇️', buttons);
+      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || languageService.greetingMap.get(lang), buttons);
     } catch (error) {
       console.error(error);
       this.returnMainMenu(userTelegramId);
