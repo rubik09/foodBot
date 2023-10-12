@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import languageService from 'src/lang';
@@ -8,6 +8,7 @@ import { Action } from 'src/schemas/action.schema';
 const { langMap, actionsDict } = languageService;
 @Injectable()
 export class UpdateActionsService implements OnModuleInit {
+  private readonly logger = new Logger(UpdateActionsService.name);
   constructor(@InjectModel(Action.name) private actionModel: Model<Action>) {}
   //loads or updates actions from google sheet
   async loadActions() {
@@ -20,6 +21,13 @@ export class UpdateActionsService implements OnModuleInit {
   async onModuleInit() {
     try {
       const res: Action[] = await this.actionModel.find();
+      if (!res.length) {
+        this.logger.warn('not found buttons in DB, try to load from google sheet');
+        await this.loadActions();
+        const actions = await this.actionModel.find();
+        if (!actions.length) throw new Error('No buttons in DB and google sheet');
+        res.push(...actions);
+      }
       res.forEach((action) => {
         if (!actionsDict.has(action.type)) {
           actionsDict.set(action.type, []);

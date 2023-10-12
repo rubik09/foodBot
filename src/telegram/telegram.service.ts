@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ButtonService } from '../button/button.service';
 import { Message } from 'node-telegram-bot-api';
@@ -6,9 +6,9 @@ import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
 import languageService from 'src/lang';
 @Injectable()
-export class TelegramService {
+export class TelegramService implements OnModuleInit {
+  private readonly logger = new Logger(TelegramService.name);
   private readonly bot: TelegramBot;
-
   constructor(private readonly buttonService: ButtonService, private readonly userService: UserService) {
     this.bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
   }
@@ -163,5 +163,9 @@ export class TelegramService {
         this.returnMainMenu(userTelegramId);
       }
     });
+  }
+  async onModuleInit() {
+    await this.handleUpdates();
+    this.logger.log('Bot started successfully');
   }
 }
