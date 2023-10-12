@@ -4,13 +4,18 @@ import { ButtonService } from '../button/button.service';
 import { Message } from 'node-telegram-bot-api';
 import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
-import languageService from 'src/lang';
+import languageService from '../language/language.service';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
   private readonly bot: TelegramBot;
-  constructor(private readonly buttonService: ButtonService, private readonly userService: UserService) {
-    this.bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+  constructor(
+    private readonly buttonService: ButtonService,
+    private readonly userService: UserService,
+    private configService: ConfigService,
+  ) {
+    this.bot = new TelegramBot(this.configService.get('app-config.BOT_TOKEN'), { polling: true });
   }
 
   async increaseState(userTelegramId: number) {
@@ -20,15 +25,16 @@ export class TelegramService implements OnModuleInit {
   }
 
   async sendLangKeyboard(userTelegramId: number) {
+    const markup: TelegramBot.ReplyKeyboardMarkup = {
+      keyboard: [
+        [{ text: 'Русский' }, { text: 'English' }, { text: 'Portuguesa' }],
+        [{ text: 'Español' }, { text: 'Français' }],
+      ],
+      one_time_keyboard: true,
+      resize_keyboard: true,
+    };
     this.bot.sendMessage(userTelegramId, 'Choose your language:', {
-      reply_markup: {
-        keyboard: [
-          //@ts-ignore
-          ['Русский', 'English', 'Portuguesa'],
-        ],
-        one_time_keyboard: true,
-        resize_keyboard: true,
-      },
+      reply_markup: markup,
     });
   }
 
@@ -46,7 +52,8 @@ export class TelegramService implements OnModuleInit {
     const userData = await this.userService.getUser(userTelegramId);
     await this.userService.saveState(userTelegramId, '');
     const buttons = await this.buttonService.findButtonsByPath('', userData.language);
-    this.bot.sendMessage(userTelegramId, text, {
+    const lang = userData.language;
+    this.bot.sendMessage(userTelegramId, languageService.greetingMap.get(lang), {
       reply_markup: {
         keyboard: buttons,
         one_time_keyboard: true,
@@ -67,7 +74,7 @@ export class TelegramService implements OnModuleInit {
       userData = await this.userService.saveState(userTelegramId, path);
       const buttons = await this.buttonService.findButtonsByPath(userData.state, lang);
       const buttonPrev = await this.buttonService.getButton(userData.state, lang);
-      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || '⬇️🏠⬇️', buttons);
+      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || languageService.greetingMap.get(lang), buttons);
     } catch (error) {
       console.error(error);
       this.returnMainMenu(userTelegramId);

@@ -1,5 +1,5 @@
-import getDataFromApi from 'src/utils/googleApi/api';
-import Button from 'src/types/button';
+import { googleApiService } from '../utils/googleApi/api';
+import Button from '../types/button';
 
 const arrToBtns = (arr: string[][]): Array<Array<Button | null>> => {
   const res: Array<Array<Button | null>> = [];
@@ -92,7 +92,7 @@ const genPath = (arr: Array<Array<Button | null>>): Button[] => {
 
 export default async function createBtns(pageNumber: number): Promise<Button[]> {
   try {
-    const arr = await getDataFromApi(pageNumber);
+    const arr = await googleApiService.getButtons(pageNumber);
     return genPath(arrToBtns(arr));
   } catch (err) {
     throw new Error(err);

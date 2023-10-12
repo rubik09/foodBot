@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import languageService from 'src/lang';
+import languageService from '../language/language.service';
 
 import load from './parser';
 import { Action } from 'src/schemas/action.schema';
