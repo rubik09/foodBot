@@ -6,6 +6,7 @@ import languageService from '../language/language.service';
 import errors from '../utils/googleApi/errors';
 import { Button } from '../schemas/button.schema';
 import { googleApiService } from '../utils/googleApi/api';
+import { httpResponceMessages } from '../utils/messages';
 
 const langMap = languageService.langMap;
 @Injectable()
@@ -24,22 +25,19 @@ export class UpdateService implements OnModuleInit {
     }
   }
 
-  async updateBotStructure(lang: string | string[] | undefined) {
-    if (typeof lang === 'string') {
+  async updateBotStructure(langData: string) {
+    const langs = langData.split(',');
+    langs.forEach((lang) => {
       if (!langMap.has(lang)) throw new Error(JSON.stringify(errors.wrongLang.text));
-      else {
-        const res = await loadBtns(langMap.get(lang));
-        res.forEach((el) => (el.language = lang));
-        await this.buttonModel.deleteMany({ language: lang });
-        await this.buttonModel.insertMany(res);
-        return JSON.stringify({ msg: 'success update' });
-      }
-    } else {
-      return JSON.stringify({
-        message:
-          'please provide language. Route for updating all or several languages, will be implemented soon or not, by safety reasons',
-      });
+    });
+    for (let lang of langs) {
+      const res = await loadBtns(langMap.get(lang));
+      res.forEach((el) => (el.language = lang));
+      await this.buttonModel.deleteMany({ language: lang });
+      await this.buttonModel.insertMany(res);
+      this.logger.log(`Language ${lang} loaded`);
     }
+    return JSON.stringify({ messages: httpResponceMessages.success });
   }
 
   async onModuleInit() {

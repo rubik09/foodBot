@@ -2,6 +2,7 @@ import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Button } from '../schemas/button.schema';
+import { actionsMap } from '../utils/telegram.constants';
 import languageService from '../language/language.service';
 const lang = languageService.langMap;
 const actionsDict = languageService.actionsDict;
@@ -31,7 +32,7 @@ export class ButtonService {
     if (path.length <= 2) {
       return '';
     } else {
-      const newPath = await path.slice(0, path.length - 3);
+      const newPath = path.slice(0, path.length - 3);
       return newPath;
     }
   }
@@ -48,26 +49,26 @@ export class ButtonService {
     buttons.sort((a, b) => a.path.localeCompare(b.path));
 
     const buttonArray = buttons.map((item) => item.button);
-    if (buttonArray.includes('{{mainActions}}')) {
+    if (buttonArray.includes(actionsMap.mainActions.templateText)) {
       const mainButtons = languageService.getActionsByLang(language).map((el) => el.button);
       buttonArray.pop();
       buttonArray.push(...mainButtons);
     }
-    if (buttonArray.includes('{{back}}')) {
-      const index = buttonArray.indexOf('{{back}}');
-      buttonArray[index] = actionsDict.get('back')[lang.get(language)].button;
+    if (buttonArray.includes(actionsMap.back.templateText)) {
+      const index = buttonArray.indexOf(actionsMap.back.templateText);
+      buttonArray[index] = actionsDict.get(actionsMap.back.actionName)[lang.get(language)].button;
     }
-    if (buttonArray.includes('{{support}}')) {
-      const index = buttonArray.indexOf('{{support}}');
-      buttonArray[index] = actionsDict.get('support')[lang.get(language)].button;
+    if (buttonArray.includes(actionsMap.support.templateText)) {
+      const index = buttonArray.indexOf(actionsMap.support.templateText);
+      buttonArray[index] = actionsDict.get(actionsMap.support.actionName)[lang.get(language)].button;
     }
-    if (buttonArray.includes('{{begin}}')) {
-      const index = buttonArray.indexOf('{{begin}}');
-      buttonArray[index] = actionsDict.get('begin')[lang.get(language)].button;
+    if (buttonArray.includes(actionsMap.begin.templateText)) {
+      const index = buttonArray.indexOf(actionsMap.begin.templateText);
+      buttonArray[index] = actionsDict.get(actionsMap.begin.actionName)[lang.get(language)].button;
     }
-    if (buttonArray.includes('{{greeting}}')) {
-      const index = buttonArray.indexOf('{{greeting}}');
-      buttonArray[index] = actionsDict.get('greeting')[lang.get(language)].button;
+    if (buttonArray.includes(actionsMap.greeting.templateText)) {
+      const index = buttonArray.indexOf(actionsMap.greeting.templateText);
+      buttonArray[index] = actionsDict.get(actionsMap.greeting.actionName)[lang.get(language)].button;
     }
     const result = await this.addButtonsToKeyboard(buttonArray, 1);
     return result;
