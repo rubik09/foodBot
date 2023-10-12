@@ -25,15 +25,16 @@ export class TelegramService implements OnModuleInit {
   }
 
   async sendLangKeyboard(userTelegramId: number) {
+    const markup: TelegramBot.ReplyKeyboardMarkup = {
+      keyboard: [
+        [{ text: 'Русский' }, { text: 'English' }, { text: 'Portuguesa' }],
+        [{ text: 'Español' }, { text: 'Français' }],
+      ],
+      one_time_keyboard: true,
+      resize_keyboard: true,
+    };
     this.bot.sendMessage(userTelegramId, 'Choose your language:', {
-      reply_markup: {
-        keyboard: [
-          //@ts-ignore
-          ['Русский', 'English', 'Portuguesa', 'Español'],
-        ],
-        one_time_keyboard: true,
-        resize_keyboard: true,
-      },
+      reply_markup: markup,
     });
   }
 
