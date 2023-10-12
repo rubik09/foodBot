@@ -51,7 +51,8 @@ export class TelegramService implements OnModuleInit {
     const userData = await this.userService.getUser(userTelegramId);
     await this.userService.saveState(userTelegramId, '');
     const buttons = await this.buttonService.findButtonsByPath('', userData.language);
-    this.bot.sendMessage(userTelegramId, text, {
+    const lang = userData.language;
+    this.bot.sendMessage(userTelegramId, languageService.greetingMap.get(lang), {
       reply_markup: {
         keyboard: buttons,
         one_time_keyboard: true,
