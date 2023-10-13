@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import languageService from '../language/language.service';
-
+import {httpResponceMessages} from '../utils/messages';
 import load from './parser';
 import { Action } from 'src/schemas/action.schema';
 const { langMap, actionsDict } = languageService;
@@ -15,7 +15,7 @@ export class UpdateActionsService implements OnModuleInit {
     const res = await load();
     await this.actionModel.deleteMany();
     await this.actionModel.insertMany(res);
-    return JSON.stringify({ msg: 'success update' });
+    return JSON.stringify({ message: httpResponceMessages.success });
   }
   //create map for action.type <-> Action[]
   async onModuleInit() {

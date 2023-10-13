@@ -6,6 +6,8 @@ import { langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
 import languageService from '../language/language.service';
 import { ConfigService } from '@nestjs/config';
+import { botInternationalMessages } from '../utils/messages';
+import { actionsMap } from '../utils/telegram.constants';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -33,7 +35,7 @@ export class TelegramService implements OnModuleInit {
       one_time_keyboard: true,
       resize_keyboard: true,
     };
-    this.bot.sendMessage(userTelegramId, 'Choose your language:', {
+    this.bot.sendMessage(userTelegramId, botInternationalMessages.choseLanguage, {
       reply_markup: markup,
     });
   }
@@ -48,7 +50,7 @@ export class TelegramService implements OnModuleInit {
     });
   }
 
-  async returnMainMenu(userTelegramId: number, text: string = '⬇️🏠⬇️') {
+  async returnMainMenu(userTelegramId: number) {
     const userData = await this.userService.getUser(userTelegramId);
     await this.userService.saveState(userTelegramId, '');
     const buttons = await this.buttonService.findButtonsByPath('', userData.language);
@@ -62,7 +64,7 @@ export class TelegramService implements OnModuleInit {
     });
   }
 
-  async begin(msg: Message, lang: string) {
+  async begin(msg: Message) {
     await this.returnMainMenu(msg.from.id);
   }
 
@@ -84,9 +86,9 @@ export class TelegramService implements OnModuleInit {
   async support(msg: Message, lang: string) {
     const userTelegramId = msg.from.id;
     await this.increaseState(userTelegramId);
-    const back = languageService.getActionByLangAndType(lang, 'back');
-    const begin = languageService.getActionByLangAndType(lang, 'begin');
-    const support = languageService.getActionByLangAndType(lang, 'support');
+    const back = languageService.getActionByLangAndType(lang, actionsMap.back.actionName);
+    const begin = languageService.getActionByLangAndType(lang, actionsMap.begin.actionName);
+    const support = languageService.getActionByLangAndType(lang, actionsMap.support.actionName);
     const buttons = await this.buttonService.addButtonsToKeyboard([begin.button, back.button], 1);
     this.sendMessageAndKeyboard(userTelegramId, support.text, buttons);
   }
@@ -94,9 +96,9 @@ export class TelegramService implements OnModuleInit {
   async greeting(msg: Message, lang: string) {
     const userTelegramId = msg.from.id;
     await this.increaseState(userTelegramId);
-    const back = languageService.getActionByLangAndType(lang, 'back');
-    const begin = languageService.getActionByLangAndType(lang, 'begin');
-    const greeting = languageService.getActionByLangAndType(lang, 'greeting');
+    const back = languageService.getActionByLangAndType(lang, actionsMap.back.actionName);
+    const begin = languageService.getActionByLangAndType(lang, actionsMap.begin.actionName);
+    const greeting = languageService.getActionByLangAndType(lang, actionsMap.greeting.actionName);
     const buttons = await this.buttonService.addButtonsToKeyboard([begin.button, back.button], 1);
     this.sendMessageAndKeyboard(userTelegramId, greeting.text, buttons);
   }
@@ -126,7 +128,7 @@ export class TelegramService implements OnModuleInit {
           this.bot.sendMessage(userTelegramId, `${message} ✅`);
           return await this.returnMainMenu(userTelegramId);
         } else {
-          this.bot.sendMessage(userTelegramId, `Language not found🚫`);
+          this.bot.sendMessage(userTelegramId, botInternationalMessages.notFoundLang);
           return await this.sendLangKeyboard(userTelegramId);
         }
       }
@@ -136,16 +138,16 @@ export class TelegramService implements OnModuleInit {
       if (foundAction) {
         try {
           switch (foundAction.type) {
-            case 'back':
+            case actionsMap.back.actionName:
               this.back(msg, userData.language);
               return;
-            case 'begin':
-              this.begin(msg, userData.language);
+            case actionsMap.begin.actionName:
+              this.begin(msg);
               return;
-            case 'support':
+            case actionsMap.support.actionName:
               this.support(msg, userData.language);
               return;
-            case 'greeting':
+            case actionsMap.greeting.actionName:
               this.greeting(msg, userData.language);
               return;
           }

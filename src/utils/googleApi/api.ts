@@ -10,29 +10,6 @@ const serviceAccountAuth = new JWT({
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
-const getCSV = async (sheetId: string, authService: JWT, pageNumber: number): Promise<string[][]> => {
-  const doc = new GoogleSpreadsheet(sheetId, authService);
-  try {
-    await doc.loadInfo(); // loads document properties and worksheets
-  } catch {
-    throw new Error(JSON.stringify(errors.wrongCreds));
-  }
-
-  try {
-    const sheet = doc.sheetsByIndex[pageNumber];
-    const rows = await sheet.getRows();
-    const result = [];
-
-    for (const row of rows) {
-      // @ts-ignore
-      result.push(row._rawData);
-    }
-    return result;
-  } catch {
-    throw new Error(JSON.stringify(errors.wrongLang));
-  }
-};
-
 class GoogleApiService {
   private readonly SHEET_ID: string;
   private readonly serviceAccountAuth: JWT;
@@ -88,7 +65,4 @@ class GoogleApiService {
   };
 }
 
-export default async function (pageNumber: number): Promise<string[][]> {
-  return getCSV(SHEET_ID, serviceAccountAuth, pageNumber);
-}
 export const googleApiService = new GoogleApiService(SHEET_ID, serviceAccountAuth);
