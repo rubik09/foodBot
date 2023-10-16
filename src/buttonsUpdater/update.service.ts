@@ -1,29 +1,18 @@
-import { Model } from 'mongoose';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import loadBtns from './parser';
 import languageService from '../language/language.service';
 import errors from '../utils/googleApi/errors';
 import { Button } from '../schemas/button.schema';
 import { googleApiService } from '../utils/googleApi/api';
 import { httpResponceMessages } from '../utils/messages';
+import { UpdateProvider } from './update.provider';
 
 const langMap = languageService.langMap;
 @Injectable()
 export class UpdateService implements OnModuleInit {
   private readonly logger = new Logger(UpdateService.name);
 
-  constructor(@InjectModel(Button.name) private buttonModel: Model<Button>) {}
-
-  private async updateAllLangs() {
-    await this.buttonModel.deleteMany();
-    for (let [key, value] of languageService.langMap) {
-      const res = await loadBtns(value);
-      res.forEach((el) => (el.language = key));
-      await this.buttonModel.insertMany(res);
-      this.logger.log(`Loaded language ${key}`);
-    }
-  }
+  constructor(private updateProvider: UpdateProvider) {}
 
   async updateBotStructure(langData: string) {
     const langs = langData.split(',');
@@ -31,10 +20,10 @@ export class UpdateService implements OnModuleInit {
       if (!langMap.has(lang)) throw new Error(JSON.stringify(errors.wrongLang.text));
     });
     for (let lang of langs) {
-      const res = await loadBtns(langMap.get(lang));
+      const res:Button[] = await loadBtns(langMap.get(lang));
       res.forEach((el) => (el.language = lang));
-      await this.buttonModel.deleteMany({ language: lang });
-      await this.buttonModel.insertMany(res);
+      await this.updateProvider.removeBtnsByLang(lang);
+      await this.updateProvider.uploadBtns(res);
       this.logger.log(`Language ${lang} loaded`);
     }
     return JSON.stringify({ messages: httpResponceMessages.success });

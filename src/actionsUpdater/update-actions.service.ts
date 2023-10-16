@@ -1,30 +1,30 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import languageService from '../language/language.service';
-import {httpResponceMessages} from '../utils/messages';
+import { httpResponceMessages } from '../utils/messages';
 import load from './parser';
-import { Action } from 'src/schemas/action.schema';
+import { Action } from '../schemas/action.schema';
+import { UpdateActionProvider } from './update-actions.provider';
 const { langMap, actionsDict } = languageService;
+
 @Injectable()
 export class UpdateActionsService implements OnModuleInit {
   private readonly logger = new Logger(UpdateActionsService.name);
-  constructor(@InjectModel(Action.name) private actionModel: Model<Action>) {}
+  constructor(private updateActionProvider: UpdateActionProvider) {}
   //loads or updates actions from google sheet
   async loadActions() {
     const res = await load();
-    await this.actionModel.deleteMany();
-    await this.actionModel.insertMany(res);
+    await this.updateActionProvider.removeAllActions();
+    await this.updateActionProvider.uploadActions(res);
     return JSON.stringify({ message: httpResponceMessages.success });
   }
   //create map for action.type <-> Action[]
   async onModuleInit() {
     try {
-      const res: Action[] = await this.actionModel.find();
+      const res: Action[] = await this.updateActionProvider.getActions();
       if (!res.length) {
         this.logger.warn('not found buttons in DB, try to load from google sheet');
         await this.loadActions();
-        const actions = await this.actionModel.find();
+        const actions = await this.updateActionProvider.getActions();
         if (!actions.length) throw new Error('No buttons in DB and google sheet');
         res.push(...actions);
       }

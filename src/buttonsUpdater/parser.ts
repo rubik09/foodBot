@@ -12,6 +12,8 @@ const arrToBtns = (arr: string[][]): Array<Array<Button | null>> => {
           button: el[j],
           imageLink: el[j + 1] || '',
           text: el[j + 2] || '',
+          path: '',
+          language: '',
         });
       } else {
         btns.push(null);
