@@ -50,6 +50,22 @@ export class TelegramService implements OnModuleInit {
     });
   }
 
+  async sendImageMessageAndKeyboard(
+    userTelegramId: number,
+    text: string,
+    buttons: { text: string }[][],
+    imageLink: string,
+  ) {
+    this.bot.sendPhoto(userTelegramId, imageLink, {
+      caption: text,
+      reply_markup: {
+        keyboard: buttons,
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
+    });
+  }
+
   async returnMainMenu(userTelegramId: number) {
     const userData = await this.userService.getUser(userTelegramId);
     await this.userService.saveState(userTelegramId, '');
@@ -76,7 +92,13 @@ export class TelegramService implements OnModuleInit {
       userData = await this.userService.saveState(userTelegramId, path);
       const buttons = await this.buttonService.findButtonsByPath(userData.state, lang);
       const buttonPrev = await this.buttonService.getButton(userData.state, lang);
-      this.sendMessageAndKeyboard(userTelegramId, buttonPrev?.text || languageService.greetingMap.get(lang), buttons);
+      if (!buttonPrev?.text) {
+        this.sendMessageAndKeyboard(userTelegramId, languageService.greetingMap.get(lang), buttons);
+      } else {
+        if (buttonPrev.imageLink)
+          this.sendImageMessageAndKeyboard(userTelegramId, buttonPrev.text, buttons, buttonPrev.imageLink);
+        else this.sendMessageAndKeyboard(userTelegramId, buttonPrev.text, buttons);
+      }
     } catch (error) {
       console.error(error);
       this.returnMainMenu(userTelegramId);
@@ -160,10 +182,14 @@ export class TelegramService implements OnModuleInit {
         const targetButton = currentButtons.find((item) => item.button === message);
 
         if (targetButton) {
-          const { path, text } = targetButton;
+          const { path, text, imageLink } = targetButton;
           await this.userService.saveState(userTelegramId, path);
           const buttons = await this.buttonService.findButtonsByPath(path, userData.language);
-          this.sendMessageAndKeyboard(userTelegramId, text, buttons);
+          if (imageLink) {
+            this.sendImageMessageAndKeyboard(userTelegramId, text, buttons, imageLink);
+          } else {
+            this.sendMessageAndKeyboard(userTelegramId, text, buttons);
+          }
         } else {
           this.returnMainMenu(userTelegramId);
         }

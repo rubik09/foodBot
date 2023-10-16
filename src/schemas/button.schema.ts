@@ -11,6 +11,9 @@ export class Button {
   @Prop()
   text: string;
 
+  @Prop()
+  imageLink: string;
+
   @Prop({ required: true })
   path: string;
 

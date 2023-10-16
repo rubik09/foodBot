@@ -6,11 +6,12 @@ const arrToBtns = (arr: string[][]): Array<Array<Button | null>> => {
   for (let i = 0; i < arr.length; i++) {
     const btns = [];
     const el = arr[i];
-    for (let j = 0; j < el.length; j += 2) {
+    for (let j = 0; j < el.length; j += 3) {
       if (el[j]) {
         btns.push({
           button: el[j],
-          text: el[j + 1] || '',
+          imageLink: el[j + 1] || '',
+          text: el[j + 2] || '',
         });
       } else {
         btns.push(null);
@@ -63,7 +64,7 @@ const genPath = (arr: Array<Array<Button | null>>): Button[] => {
       if (!el) continue;
       el.button = el.button.trim();
       el.text = el.text.trim();
-
+      el.imageLink = el.imageLink.trim();
       //check if element not emty (el.button always should exists)
       if (!el.button && !el.text) continue;
 
