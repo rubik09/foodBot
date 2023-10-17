@@ -8,8 +8,8 @@ import { GlobalExceptionFilter } from './filter';
 import { HealthModule } from './health/health.module';
 import { UpdateModule } from './buttonsUpdater/update.module';
 import { TelegramModule } from './telegram/telegram.module';
-import { UserModule } from './user/user.module';
-import { ButtonModule } from './button/button.module';
+import { UserModule } from './telegram/user/user.module';
+import { ButtonModule } from './telegram/button/button.module';
 import { UpdateActionsModule } from './actionsUpdater/update-actions.module';
 import { ConfigService } from '@nestjs/config';
 

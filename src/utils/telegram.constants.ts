@@ -4,6 +4,8 @@ export const langMap = {
   Portuguesa: 'pt',
   Español: 'es',
   Français: 'fr',
+  Uzbek: 'uz',
+  Türkçe: 'tr',
 };
 
 export const actionsMap = {
@@ -27,3 +29,5 @@ export const actionsMap = {
     actionName: 'greeting',
   },
 };
+// Default greeting image will send if there are no specified image for current language
+export const greetingImageLink = 'https://i.ibb.co/rtWVBnw/gallery.jpg';
