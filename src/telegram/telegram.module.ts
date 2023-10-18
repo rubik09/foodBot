@@ -4,8 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Button, ButtonSchema } from '../schemas/button.schema';
 import { User, UserSchema } from '../schemas/user.schema';
 import { TelegramService } from './telegram.service';
-import { UserModule } from '../user/user.module';
-import { ButtonModule } from '../button/button.module';
+import { UserModule } from './user/user.module';
+import { ButtonModule } from './button/button.module';
 
 
 @Module({

@@ -1,13 +1,17 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from '../schemas/user.schema';
+import { User } from '../../schemas/user.schema';
 
 @Injectable()
-export class UserService {
-  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
-
-  async createUser(userTelegramId: number, username: string, state: string = 'lang', language: string = null): Promise<User> {
+export class UserProvider {
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  async createUser(
+    userTelegramId: number,
+    username: string,
+    state: string = 'lang',
+    language: string = null,
+  ): Promise<User> {
     return await this.userModel.create({ userTelegramId, username, state, language });
   }
 

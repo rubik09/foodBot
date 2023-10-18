@@ -1,13 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { UserService } from '../user/user.service';
-import { ButtonService } from '../button/button.service';
+import { UserService } from './user/user.service';
+import { ButtonService } from './button/button.service';
 import { Message } from 'node-telegram-bot-api';
-import { langMap } from '../utils/telegram.constants';
+import { greetingImageLink, langMap } from '../utils/telegram.constants';
 import TelegramBot = require('node-telegram-bot-api');
 import languageService from '../language/language.service';
 import { ConfigService } from '@nestjs/config';
 import { botInternationalMessages } from '../utils/messages';
 import { actionsMap } from '../utils/telegram.constants';
+import { greetingImgLinksMap } from '../language/greetingMessage';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -31,6 +32,7 @@ export class TelegramService implements OnModuleInit {
       keyboard: [
         [{ text: 'Русский' }, { text: 'English' }, { text: 'Portuguesa' }],
         [{ text: 'Español' }, { text: 'Français' }],
+        [{ text: 'Uzbek' }, { text: 'Türkçe' }, { text: 'Azerbaijani' }],
       ],
       one_time_keyboard: true,
       resize_keyboard: true,
@@ -71,7 +73,8 @@ export class TelegramService implements OnModuleInit {
     await this.userService.saveState(userTelegramId, '');
     const buttons = await this.buttonService.findButtonsByPath('', userData.language);
     const lang = userData.language;
-    this.bot.sendMessage(userTelegramId, languageService.greetingMap.get(lang), {
+    this.bot.sendPhoto(userTelegramId, greetingImgLinksMap.get(lang) || greetingImageLink, {
+      caption: languageService.greetingMap.get(lang),
       reply_markup: {
         keyboard: buttons,
         one_time_keyboard: true,

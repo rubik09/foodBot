@@ -1,9 +1,9 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Button } from '../schemas/button.schema';
-import { actionsMap } from '../utils/telegram.constants';
-import languageService from '../language/language.service';
+import { Button } from '../../schemas/button.schema';
+import { actionsMap } from '../../utils/telegram.constants';
+import languageService from '../../language/language.service';
 const lang = languageService.langMap;
 const actionsDict = languageService.actionsDict;
 @Injectable()
