@@ -6,6 +6,7 @@ export const langMap = {
   Français: 'fr',
   Uzbek: 'uz',
   Türkçe: 'tr',
+  Azerbaijani: 'az',
 };
 
 export const actionsMap = {

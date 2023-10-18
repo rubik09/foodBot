@@ -32,7 +32,7 @@ export class TelegramService implements OnModuleInit {
       keyboard: [
         [{ text: 'Русский' }, { text: 'English' }, { text: 'Portuguesa' }],
         [{ text: 'Español' }, { text: 'Français' }],
-        [{ text: 'Uzbek' }, { text: 'Türkçe' }],
+        [{ text: 'Uzbek' }, { text: 'Türkçe' }, { text: 'Azerbaijani' }],
       ],
       one_time_keyboard: true,
       resize_keyboard: true,
