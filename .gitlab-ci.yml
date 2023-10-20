@@ -1,0 +1,20 @@
+stages:
+  - docker-build
+variables:
+  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+
+docker-build:
+  image: docker:latest
+  services:
+      - docker:dind
+  stage: docker-build
+  script:
+      - docker build -t $CI_REGISTRY_IMAGE:latest -t $IMAGE --build-arg app_version=${CI_COMMIT_TAG} .
+      - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+      - docker push $CI_REGISTRY_IMAGE:latest
+      - docker push $IMAGE
+  parallel: 1
+  tags:
+    - cdp-tgbot
+  only:
+    - /^v.*$/i
