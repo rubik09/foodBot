@@ -17,7 +17,7 @@ RUN printenv
 
 ARG NPM_TOKEN
 
-RUN echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/" > .npmrc && echo "//fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
+RUN echo "@1win:registry=https://fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/" > .npmrc && echo "//fbet-gitlab.ex2b.co/api/v4/projects/1306/packages/npm/:_authToken=glpat-psZ3UeM_CVK2W6zr37iB" >> .npmrc
 
 # Install app dependencies using the `npm ci` command instead of `npm install`
 RUN npm ci
