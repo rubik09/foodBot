@@ -1,8 +1,8 @@
 import { Controller, Get, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
-import { UpdateActionsService } from './update-actions.service';
+import { UpdateActionsService } from './update-prices.service';
 
-@Controller('update-actions')
+@Controller('update-price')
 @UseGuards(AuthGuard)
 export class UpdateActionsController {
   constructor(private updateActionService: UpdateActionsService) {}

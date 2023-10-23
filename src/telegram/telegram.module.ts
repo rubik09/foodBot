@@ -1,19 +1,19 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TelegramController } from './telegram.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Button, ButtonSchema } from '../schemas/button.schema';
+import { Order, Orderchema } from '../schemas/order.schema';
 import { User, UserSchema } from '../schemas/user.schema';
 import { TelegramService } from './telegram.service';
 import { UserModule } from './user/user.module';
-import { ButtonModule } from './button/button.module';
+import { OrderModule } from './order/order.module';
 
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Button.name, schema: ButtonSchema }]),
+    MongooseModule.forFeature([{ name: Order.name, schema: Orderchema }]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     forwardRef(() => UserModule),
-    forwardRef(() => ButtonModule)
+    forwardRef(() => OrderModule)
   ],
   controllers: [TelegramController],
   providers: [TelegramService]

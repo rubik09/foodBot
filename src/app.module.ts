@@ -6,11 +6,11 @@ import { logger } from '@1win/cdp-backend-tools';
 import config from './configuration/config';
 import { GlobalExceptionFilter } from './filter';
 import { HealthModule } from './health/health.module';
-import { UpdateModule } from './buttonsUpdater/update.module';
+// import { UpdateModule } from './buttonsUpdater/update.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { UserModule } from './telegram/user/user.module';
-import { ButtonModule } from './telegram/button/button.module';
-import { UpdateActionsModule } from './actionsUpdater/update-actions.module';
+import { OrderModule } from './telegram/order/order.module';
+import { UpdatePricesModule } from './actionsUpdater/update-prices.module';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
@@ -20,7 +20,7 @@ import { ConfigService } from '@nestjs/config';
       load: [config],
     }),
     HealthModule,
-    UpdateModule,
+    // UpdateModule,
     TelegramModule,
     MongooseModule.forRootAsync({
       inject: [ConfigService],
@@ -28,9 +28,10 @@ import { ConfigService } from '@nestjs/config';
         uri: configService.getOrThrow('app-config.MONGO_URL'),
       }),
     }),
-    ButtonModule,
+    OrderModule,
     UserModule,
-    UpdateActionsModule,
+    UpdatePricesModule
+    // UpdateActionsModule,
   ],
   providers: [
     {

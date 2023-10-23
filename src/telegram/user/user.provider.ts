@@ -9,10 +9,9 @@ export class UserProvider {
   async createUser(
     userTelegramId: number,
     username: string,
-    state: string = 'lang',
-    language: string = null,
+    state: string = 'start',
   ): Promise<User> {
-    return await this.userModel.create({ userTelegramId, username, state, language });
+    return await this.userModel.create({ userTelegramId, username, state });
   }
 
   async getUser(userTelegramId: number): Promise<User | null> {
@@ -29,18 +28,26 @@ export class UserProvider {
     return await user.save();
   }
 
-  async saveLanguage(userTelegramId: number, language: string, state: string = ''): Promise<User> {
+  async saveOrderType(userTelegramId: number, orderType: string): Promise<User> {
     let user = await this.userModel.findOne({ userTelegramId });
     if (!user) {
-      user = new this.userModel({ userTelegramId, language, state });
+      user = new this.userModel({ userTelegramId, orderType });
     } else {
-      user.language = language;
-      user.state = state;
+      user.orderType = orderType;
     }
     return await user.save();
   }
-
   async getState(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).state;
   }
+  // async saveLanguage(userTelegramId: number, language: string, state: string = ''): Promise<User> {
+  //   let user = await this.userModel.findOne({ userTelegramId });
+  //   if (!user) {
+  //     user = new this.userModel({ userTelegramId, language, state });
+  //   } else {
+  //     user.language = language;
+  //     user.state = state;
+  //   }
+  //   return await user.save();
+  // }
 }

@@ -12,8 +12,8 @@ export class User {
   username: string;
 
   @Prop()
-  language: string;
-
+  orderType: string;
+  
   @Prop()
   state: string;
 }
