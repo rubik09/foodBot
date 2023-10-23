@@ -152,6 +152,9 @@ export class TelegramService implements OnModuleInit {
         const username = msg.from.username || '';
         await this.userService.createUser(userTelegramId, username);
         await this.sendMainKeyboard(userTelegramId);
+      } else {
+
+        await this.userService.saveState(userTelegramId, 'start');
       }
     });
 

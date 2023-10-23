@@ -11,7 +11,6 @@ type Menu = {
 
   salad: string;
 
-  price: number;
 };
 
 export default Menu;
