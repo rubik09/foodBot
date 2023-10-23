@@ -6,7 +6,7 @@ const arrToActions = (arr: string[][], headerArr: string[]): Menu[] => {
   const res: Menu[] = [];
   arr.forEach((row) => {
     console.log(row)
-    const 
+
     for(let i = 1; i < row.length; i += 1) {
 
     }
