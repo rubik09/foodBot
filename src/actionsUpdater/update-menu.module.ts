@@ -6,8 +6,9 @@ import { Menu, MenuSchema } from '../schemas/menu.schema';
 import { UpdateMenuProvider } from './update-menu.provider';
 
 @Module({
+  exports: [UpdateMenuService, UpdateMenuProvider],
   imports: [MongooseModule.forFeature([{ name: Menu.name, schema: MenuSchema }])],
   providers: [UpdateMenuService, UpdateMenuProvider],
   controllers: [UpdateMenuController],
 })
-export class UpdatePricesModule {}
+export class UpdateMenuModule {}

@@ -24,7 +24,6 @@ export class UpdateMenuService implements OnModuleInit {
     const result = await this.updateMenuProvider.getMenuPosition();
     return result;
   }
-  //create map for action.type <-> Action[]
   async onModuleInit() {
     try {
       await googleApiService.init();

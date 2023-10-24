@@ -5,12 +5,15 @@ import { Message } from 'node-telegram-bot-api';
 import TelegramBot = require('node-telegram-bot-api');
 import { ConfigService } from '@nestjs/config';
 import { botMainMessage } from '../utils/messages';
-import { MainMessage, mainMessages, secondStepActions } from '../utils/telegram.constants';
+import { MainMessage, mainMessages } from '../utils/telegram.constants';
+import { UpdateMenuService } from 'src/actionsUpdater/update-menu.service';
+import { UpdateMenuProvider } from '../actionsUpdater/update-menu.provider';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
   private readonly bot: TelegramBot;
   constructor(
+    private readonly updateMenuService: UpdateMenuService,
     private readonly orderService: OrderService,
     private readonly userService: UserService,
     private configService: ConfigService,
@@ -125,6 +128,30 @@ export class TelegramService implements OnModuleInit {
   //   const buttons = await this.buttonService.addButtonsToKeyboard([begin.button, back.button], 1);
   //   this.sendMessageAndKeyboard(userTelegramId, greeting.text, buttons);
   // }
+  async showMenu () {
+    const menuDb: {[key: string]: any} = await this.updateMenuService.getMenu();
+    console.log(Object.keys(menuDb))
+    const menu = Object.keys(menuDb)
+    .filter(item => item !== '__v' && item !== '_id' )
+    .map(item => `${item} : ${menuDb[item]}`)
+    .join('\n');
+    return menu;
+  }
+
+    // public secondStepActions = [
+    //   {
+    //     button: 'Посмотреть меню',
+    //     action: this.showMenu()
+    //   },
+    //   {
+    //     button: 'Заказать обеды на неделю (ДАТЫ)',
+    //     action: this.showMenu()
+    //   },
+    //   {
+    //     button: 'Наши цены',
+    //     action: this.showMenu()
+    //   },
+    // ] 
   async groupBy<T>(items: T[], n: number): Promise<T[][]> {
     const count = Math.ceil(items.length / n);
     const groups: T[][] = Array(count);
@@ -155,10 +182,22 @@ export class TelegramService implements OnModuleInit {
       } else {
         await this.userService.saveState(userTelegramId, 'start');
         await this.sendMainKeyboard(userTelegramId);
-      }
+      } 
     });
 
     this.bot.on('message', async (msg: Message) => {
+      const secondStepActions = {
+        'Посмотреть меню': this.showMenu(),
+        // {
+        //   button: 'Заказать обеды на неделю (ДАТЫ)',
+        //   action: this.showMenu
+        // },
+        // {
+        //   button: 'Наши цены',
+        //   action: this.showMenu
+        // }
+      }
+
       const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
 
@@ -173,18 +212,23 @@ export class TelegramService implements OnModuleInit {
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
-        const buttons = await this.addButtonsToKeyboard(secondStepActions.map(item => item.button), 1) ;
+        const buttons = await this.addButtonsToKeyboard(Object.keys(secondStepActions).map(item => item), 1) ;
         await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
         await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
         await this.userService.saveState(userTelegramId, 'orderType');
         return;
       }
       if(userState === 'orderType') {
-        const findMessageIndex = secondStepActions.findIndex(item => item.button === message);
-        if(findMessageIndex < 0) {
+        const findMessageIndex = Object.keys(secondStepActions).find(item => item === message);
+        if(!findMessageIndex) {
+          await this.userService.saveState(userTelegramId, 'start');
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
+        //@ts-ignore
+        const menu = await secondStepActions[findMessageIndex];
+        console.log('1', menu)
+        
       }
 
       // if (userData.state === 'lang') {
