@@ -128,30 +128,52 @@ export class TelegramService implements OnModuleInit {
   //   const buttons = await this.buttonService.addButtonsToKeyboard([begin.button, back.button], 1);
   //   this.sendMessageAndKeyboard(userTelegramId, greeting.text, buttons);
   // }
+
+  async formatMenu(menuData: any[]) {
+    const mapa = { weekDay: 'День недели',
+    soup: 'Суп',
+    hotDish1: 'Горячее 1',
+    hotDish2: 'Горячее 2',
+    hotDish3: 'Горячее 3',
+    salad: 'Салат'}
+    const formattedMenu = menuData.map((item) => ({
+      [mapa.weekDay]: item['weekDay'],
+      [mapa.soup]: item['soup'],
+      [mapa.hotDish1]: item['hotDish1'],
+      [mapa.hotDish2]: item['hotDish2'],
+      [mapa.hotDish3]: item['hotDish3'],
+      [mapa.salad]: item['salad'],
+    }));
+  
+    return formattedMenu;
+  }
+  
+  async printMenuForDay(dayMenu: any) {
+    const result = [];
+    for (const day of dayMenu) {
+      const formattedDay = Object.entries(day)
+        .map(([key, value]) => {
+          if (value !== '') {
+            return `${key}: ${value}`;
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .join('\n');
+      result.push(formattedDay);
+    }
+    return result.join('\n\n');
+  }
   async showMenu () {
-    const menuDb: {[key: string]: any} = await this.updateMenuService.getMenu();
-    console.log(Object.keys(menuDb))
-    const menu = Object.keys(menuDb)
-    .filter(item => item !== '__v' && item !== '_id' )
-    .map(item => `${item} : ${menuDb[item]}`)
-    .join('\n');
-    return menu;
+    const menuDb = await this.updateMenuService.getMenu();
+    const menuAr: any[] = []
+    Object.values(menuDb).map(item => menuAr.push(item))
+
+    const formattedMenu = await this.formatMenu(menuAr);
+    const newMenu = await this.printMenuForDay(formattedMenu)
+    return newMenu;
   }
 
-    // public secondStepActions = [
-    //   {
-    //     button: 'Посмотреть меню',
-    //     action: this.showMenu()
-    //   },
-    //   {
-    //     button: 'Заказать обеды на неделю (ДАТЫ)',
-    //     action: this.showMenu()
-    //   },
-    //   {
-    //     button: 'Наши цены',
-    //     action: this.showMenu()
-    //   },
-    // ] 
   async groupBy<T>(items: T[], n: number): Promise<T[][]> {
     const count = Math.ceil(items.length / n);
     const groups: T[][] = Array(count);
@@ -186,7 +208,10 @@ export class TelegramService implements OnModuleInit {
     });
 
     this.bot.on('message', async (msg: Message) => {
-      const secondStepActions = {
+      interface SecondStepActions {
+        [key: string]: Promise<string>;
+      }
+      const secondStepActions: SecondStepActions = {
         'Посмотреть меню': this.showMenu(),
         // {
         //   button: 'Заказать обеды на неделю (ДАТЫ)',
@@ -219,15 +244,14 @@ export class TelegramService implements OnModuleInit {
         return;
       }
       if(userState === 'orderType') {
-        const findMessageIndex = Object.keys(secondStepActions).find(item => item === message);
+        const findMessageIndex: string = Object.keys(secondStepActions).find(item => item === message);
         if(!findMessageIndex) {
           await this.userService.saveState(userTelegramId, 'start');
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
-        //@ts-ignore
         const menu = await secondStepActions[findMessageIndex];
-        console.log('1', menu)
+        this.bot.sendMessage(userTelegramId, menu)
         
       }
 
