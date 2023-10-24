@@ -12,6 +12,7 @@ import { UserModule } from './telegram/user/user.module';
 import { OrderModule } from './telegram/order/order.module';
 import { UpdateMenuModule } from './actionsUpdater/update-menu.module';
 import { ConfigService } from '@nestjs/config';
+import { UpdatePriceModule } from './buttonsUpdater/update-price.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { ConfigService } from '@nestjs/config';
     }),
     OrderModule,
     UserModule,
-    UpdateMenuModule
+    UpdateMenuModule,
+    UpdatePriceModule,
     // UpdateActionsModule,
   ],
   providers: [

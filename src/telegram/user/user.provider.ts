@@ -37,6 +37,10 @@ export class UserProvider {
     }
     return await user.save();
   }
+
+  async getOrderType (userTelegramId: number): Promise<string> {
+    return (await this.userModel.findOne({ userTelegramId })).orderType;
+  }
   async getState(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).state;
   }

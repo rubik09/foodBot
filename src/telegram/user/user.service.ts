@@ -28,6 +28,10 @@ export class UserService {
   async getState(userTelegramId: number): Promise<string> {
     return this.userProvider.getState(userTelegramId);
   }
+  async getOrderType(userTelegramId: number): Promise<string> {
+    return this.userProvider.getOrderType(userTelegramId);
+  }
+
   // async saveLanguage(userTelegramId: number, language: string, state: string = ''): Promise<User> {
   //   return this.userProvider.saveLanguage(userTelegramId, language, state);
   // }

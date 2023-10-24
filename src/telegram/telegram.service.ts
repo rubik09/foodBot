@@ -38,6 +38,7 @@ export class TelegramService implements OnModuleInit {
       one_time_keyboard: true,
       resize_keyboard: true,
     };
+    await this.userService.saveState(userTelegramId, 'start');
     this.bot.sendMessage(userTelegramId, botMainMessage.firstMessage, {
       reply_markup: markup,
     });
@@ -130,12 +131,14 @@ export class TelegramService implements OnModuleInit {
   // }
 
   async formatMenu(menuData: any[]) {
-    const mapa = { weekDay: 'День недели',
-    soup: 'Суп',
-    hotDish1: 'Горячее 1',
-    hotDish2: 'Горячее 2',
-    hotDish3: 'Горячее 3',
-    salad: 'Салат'}
+    const mapa = {
+      weekDay: 'День недели',
+      soup: 'Суп',
+      hotDish1: 'Горячее 1',
+      hotDish2: 'Горячее 2',
+      hotDish3: 'Горячее 3',
+      salad: 'Салат'
+    }
     const formattedMenu = menuData.map((item) => ({
       [mapa.weekDay]: item['weekDay'],
       [mapa.soup]: item['soup'],
@@ -144,10 +147,10 @@ export class TelegramService implements OnModuleInit {
       [mapa.hotDish3]: item['hotDish3'],
       [mapa.salad]: item['salad'],
     }));
-  
+
     return formattedMenu;
   }
-  
+
   async printMenuForDay(dayMenu: any) {
     const result = [];
     for (const day of dayMenu) {
@@ -164,13 +167,14 @@ export class TelegramService implements OnModuleInit {
     }
     return result.join('\n\n');
   }
-  async showMenu () {
+  async showMenu() {
     const menuDb = await this.updateMenuService.getMenu();
     const menuAr: any[] = []
     Object.values(menuDb).map(item => menuAr.push(item))
 
     const formattedMenu = await this.formatMenu(menuAr);
     const newMenu = await this.printMenuForDay(formattedMenu)
+    // await this.userService.saveState(userTelegramId, 'menu');
     return newMenu;
   }
 
@@ -202,57 +206,81 @@ export class TelegramService implements OnModuleInit {
         await this.userService.createUser(userTelegramId, username);
         await this.sendMainKeyboard(userTelegramId);
       } else {
-        await this.userService.saveState(userTelegramId, 'start');
         await this.sendMainKeyboard(userTelegramId);
-      } 
+      }
     });
 
     this.bot.on('message', async (msg: Message) => {
       interface SecondStepActions {
         [key: string]: Promise<string>;
       }
-      const secondStepActions: SecondStepActions = {
-        'Посмотреть меню': this.showMenu(),
-        // {
-        //   button: 'Заказать обеды на неделю (ДАТЫ)',
-        //   action: this.showMenu
-        // },
-        // {
-        //   button: 'Наши цены',
-        //   action: this.showMenu
-        // }
-      }
-
+      type SecondStep = {
+        menu: {
+          text: string;
+          state: string;
+        };
+        // Другие поля, если есть
+      };
       const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
 
+      const secondStep: SecondStep = {
+        menu: {
+          text: 'Посмотреть меню',
+          state: 'menu'
+        }
+      }
+
+      const secondStepActions: SecondStepActions = {
+        [secondStep.menu.text]: this.showMenu()
+      }
+      const mainActionsButtons = ['Назад', 'В начало'];
+
       const userData = await this.userService.getUser(userTelegramId);
       if (!userData) return;
-      const userState = await this.userService.getState(userTelegramId);
-      // const findMessage = mainMessages.find(item => item.text1 === message);
-      if(userState === 'start') {
+      if (message === 'Назад') {
+        if (userData.state === 'menu') {
+          const userOrderType: string = await this.userService.getOrderType(userTelegramId);
+          const findMessage = mainMessages.findIndex(item => item.orderType === userOrderType);
+          if (findMessage < 0) {
+            await this.sendMainKeyboard(userTelegramId);
+            return;
+          }
+          const buttons = await this.addButtonsToKeyboard(Object.keys(secondStepActions).map(item => item), 1);
+          await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
+          await this.userService.saveState(userTelegramId, 'orderType');
+          return;
+        }
+      }
+      if(message === 'В начало') {
+        await this.sendMainKeyboard(userTelegramId);
+        return;
+      }
+      if (userData.state === 'start') {
         const findMessage = await this.findMessageIndex(mainMessages, message);
         console.log(findMessage)
-        if(findMessage < 0) {
+        if (findMessage < 0) {
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
-        const buttons = await this.addButtonsToKeyboard(Object.keys(secondStepActions).map(item => item), 1) ;
+        const buttons = await this.addButtonsToKeyboard(Object.keys(secondStepActions).map(item => item), 1);
         await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
         await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
         await this.userService.saveState(userTelegramId, 'orderType');
         return;
       }
-      if(userState === 'orderType') {
+      if (userData.state === 'orderType') {
         const findMessageIndex: string = Object.keys(secondStepActions).find(item => item === message);
-        if(!findMessageIndex) {
+        if (!findMessageIndex) {
           await this.userService.saveState(userTelegramId, 'start');
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
         const menu = await secondStepActions[findMessageIndex];
-        this.bot.sendMessage(userTelegramId, menu)
-        
+        const buttons = await this.addButtonsToKeyboard(mainActionsButtons, 2);
+        const foundState = Object.values(secondStep).find(item => item.text === message)?.state;
+        await this.userService.saveState(userTelegramId, foundState);
+        await this.sendMessageAndKeyboard(userTelegramId, menu, buttons);
       }
 
       // if (userData.state === 'lang') {
