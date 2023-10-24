@@ -5,7 +5,7 @@ import { Message } from 'node-telegram-bot-api';
 import TelegramBot = require('node-telegram-bot-api');
 import { ConfigService } from '@nestjs/config';
 import { botMainMessage } from '../utils/messages';
-import { MainMessage, mainMessages, secondStepActions, states } from '../utils/telegram.constants';
+import { MainMessage, mainMessages, secondStepActions } from '../utils/telegram.constants';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -153,8 +153,8 @@ export class TelegramService implements OnModuleInit {
         await this.userService.createUser(userTelegramId, username);
         await this.sendMainKeyboard(userTelegramId);
       } else {
-
         await this.userService.saveState(userTelegramId, 'start');
+        await this.sendMainKeyboard(userTelegramId);
       }
     });
 
@@ -180,7 +180,11 @@ export class TelegramService implements OnModuleInit {
         return;
       }
       if(userState === 'orderType') {
-        
+        const findMessageIndex = secondStepActions.findIndex(item => item.button === message);
+        if(findMessageIndex < 0) {
+          await this.sendMainKeyboard(userTelegramId);
+          return;
+        }
       }
 
       // if (userData.state === 'lang') {

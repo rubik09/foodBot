@@ -4,7 +4,6 @@ export interface MainMessage {
   orderType: string;
 }
 
-
 export const mainMessages: MainMessage[] = [
   {text1: 'Офис (Пека дапчевича)', text2: 'В офис обеды привозятся в промежуток с 11-11.30 каждый будний день', orderType: 'Офис'},
   {text1: 'Доставка (минимальный заказ 4500)', text2: 'Доставка проводим по следующим районам: Врачар,Стари Град, Мирьево, Вождовац', orderType: 'Доставка'},

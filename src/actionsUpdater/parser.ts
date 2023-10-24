@@ -8,27 +8,21 @@ const arrToActions = (arr: string[][], headerArr: string[]): Menu[] => {
   arr.forEach((row) => {
     arrA.push(row)
   });
-  for (let i = 1; i < 6; i++) {
-    const menuForDay = getMenuForDay(i, arrA);
+  for (let i = 1; i < headerArr.length; i++) {
+    const menuForDay = getMenuForDay(i, arrA, headerArr[i]);
     res.push(menuForDay);
   }
-  console.log(res)
   return res;
 };
-function getMenuForDay(dayIndex: number, menuData: string[][]): Menu {
+function getMenuForDay(dayIndex: number, menuData: string[][], weekDay: string): Menu {
   return {
-    weekDay: getWeekDay(dayIndex),
-    soup: menuData[0][dayIndex],
-    hotDish1: menuData[1][dayIndex],
-    hotDish2: menuData[2][dayIndex],
-    hotDish3: menuData[3][dayIndex],
-    salad: menuData[4][dayIndex],
-  } ;
-}
-
-function getWeekDay(dayIndex: number): string {
-  const daysOfWeek = ['', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
-  return daysOfWeek[dayIndex];
+    weekDay: weekDay,
+    soup: menuData[0][dayIndex] !== undefined ? menuData[0][dayIndex] : '',
+    hotDish1: menuData[1][dayIndex] !== undefined ? menuData[1][dayIndex] : '',
+    hotDish2: menuData[2][dayIndex] !== undefined ? menuData[2][dayIndex] : '',
+    hotDish3: menuData[3][dayIndex] !== undefined ? menuData[3][dayIndex] : '',
+    salad: menuData[4][dayIndex] !== undefined ? menuData[4][dayIndex] : '',
+  };
 }
 
 export default async function loadActions(pageNumber: number) {

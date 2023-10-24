@@ -1,11 +1,11 @@
 import { Controller, Get, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
-import { UpdateActionsService } from './update-prices.service';
+import { UpdateMenuService } from './update-menu.service';
 
-@Controller('update-price')
+@Controller('update-menu')
 @UseGuards(AuthGuard)
-export class UpdateActionsController {
-  constructor(private updateActionService: UpdateActionsService) {}
+export class UpdateMenuController {
+  constructor(private updateActionService: UpdateMenuService) {}
   @Get()
   async updateActionsFromSheet() {
     return this.updateActionService.loadActions().catch((err) => {

@@ -10,7 +10,7 @@ import { HealthModule } from './health/health.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { UserModule } from './telegram/user/user.module';
 import { OrderModule } from './telegram/order/order.module';
-import { UpdatePricesModule } from './actionsUpdater/update-prices.module';
+import { UpdatePricesModule } from './actionsUpdater/update-menu.module';
 import { ConfigService } from '@nestjs/config';
 
 @Module({

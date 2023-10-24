@@ -22,9 +22,6 @@ export class Menu {
 
   @Prop({ required: true })
   salad: string;
-
-  @Prop({ required: true })
-  price: number;
 }
 
 export const MenuSchema = SchemaFactory.createForClass(Menu);
