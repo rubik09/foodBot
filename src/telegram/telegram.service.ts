@@ -35,7 +35,7 @@ export class TelegramService implements OnModuleInit {
         [{ text: 'Офис (Пека дапчевича)' }],
         [{ text: 'Доставка (минимальный заказ 4500)' }],
         [{ text: 'Елизмо' }],
-        [{ text: 'Альфалидс' }]
+        [{ text: 'Альфалидс' }],
       ],
       one_time_keyboard: true,
       resize_keyboard: true,
@@ -79,8 +79,8 @@ export class TelegramService implements OnModuleInit {
       hotDish1: 'Горячее 1',
       hotDish2: 'Горячее 2',
       hotDish3: 'Горячее 3',
-      salad: 'Салат'
-    }
+      salad: 'Салат',
+    };
     const formattedMenu = menuData.map((item) => ({
       [mapa.weekDay]: item['weekDay'],
       [mapa.soup]: item['soup'],
@@ -111,25 +111,34 @@ export class TelegramService implements OnModuleInit {
   }
   async showMenu() {
     const menuDb = await this.updateMenuService.getMenu();
-    const menuAr: any[] = []
-    Object.values(menuDb).map(item => menuAr.push(item))
+    const menuAr: any[] = [];
+    Object.values(menuDb).map((item) => menuAr.push(item));
 
     const formattedMenu = await this.formatMenu(menuAr);
-    const newMenu = await this.printMenuForDay(formattedMenu)
+    const newMenu = await this.printMenuForDay(formattedMenu);
     return newMenu;
   }
 
   async showPrices() {
     const prices: Record<string, any> = await this.updatePricesService.getPrices();
-    const pricesKeys = ['Суп', 'Горячее', 'Салат'];
+
     const priceEntries = Object.entries(prices)[0][1];
-    console.log(priceEntries)
-    const newPrices = Object.entries(priceEntries)
-      .filter(([key ,value]) => key !== '_id' && key !== '__v')
-      .map(([key, value], index) => `${pricesKeys[index]}: ${value}`)
+
+    const soupPrice = priceEntries.soupPrice;
+    const hotDishPrice = priceEntries.hotDishPrice;
+    const saladPrice = priceEntries.saladPrice;
+
+    const pricesObject = {
+      Суп: soupPrice,
+      Горячее: hotDishPrice,
+      Салат: saladPrice,
+    };
+
+    const priceString = Object.entries(pricesObject)
+      .map(([category, price]) => `${category}: ${price}`)
       .join('\n');
-    
-    return newPrices;
+
+    return priceString;
   }
 
   async groupBy<T>(items: T[], n: number): Promise<T[][]> {
@@ -149,7 +158,7 @@ export class TelegramService implements OnModuleInit {
     return keyboardButtons;
   }
   async findMessageIndex(arr: MainMessage[], message: string) {
-    return arr.findIndex(item => item.text1 === message);
+    return arr.findIndex((item) => item.text1 === message);
   }
   async handleUpdates(): Promise<void> {
     this.bot.onText(/\/start/, async (msg: any) => {
@@ -172,11 +181,11 @@ export class TelegramService implements OnModuleInit {
         menu: {
           text: string;
           state: string;
-        },
+        };
         price: {
           text: string;
           state: string;
-        }
+        };
       };
       const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
@@ -184,18 +193,18 @@ export class TelegramService implements OnModuleInit {
       const secondStep: SecondStep = {
         menu: {
           text: 'Посмотреть меню',
-          state: 'menu'
+          state: 'menu',
         },
         price: {
           text: 'Наши цены',
-          state: 'prices'
-        }
-      }
+          state: 'prices',
+        },
+      };
 
       const secondStepActions: SecondStepActions = {
         [secondStep.menu.text]: this.showMenu(),
-        [secondStep.price.text]: this.showPrices()
-      }
+        [secondStep.price.text]: this.showPrices(),
+      };
       const mainActionsButtons = ['Назад', 'В начало'];
 
       const userData = await this.userService.getUser(userTelegramId);
@@ -203,12 +212,15 @@ export class TelegramService implements OnModuleInit {
       if (message === 'Назад') {
         if (userData.state === 'menu') {
           const userOrderType: string = await this.userService.getOrderType(userTelegramId);
-          const findMessage = mainMessages.findIndex(item => item.orderType === userOrderType);
+          const findMessage = mainMessages.findIndex((item) => item.orderType === userOrderType);
           if (findMessage < 0) {
             await this.sendMainKeyboard(userTelegramId);
             return;
           }
-          const buttons = await this.addButtonsToKeyboard(Object.keys(secondStepActions).map(item => item), 1);
+          const buttons = await this.addButtonsToKeyboard(
+            Object.keys(secondStepActions).map((item) => item),
+            1,
+          );
           await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
           await this.userService.saveState(userTelegramId, 'orderType');
           return;
@@ -220,19 +232,22 @@ export class TelegramService implements OnModuleInit {
       }
       if (userData.state === 'start') {
         const findMessage = await this.findMessageIndex(mainMessages, message);
-        console.log(findMessage)
+        console.log(findMessage);
         if (findMessage < 0) {
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
-        const buttons = await this.addButtonsToKeyboard(Object.keys(secondStepActions).map(item => item), 1);
+        const buttons = await this.addButtonsToKeyboard(
+          Object.keys(secondStepActions).map((item) => item),
+          1,
+        );
         await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
         await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
         await this.userService.saveState(userTelegramId, 'orderType');
         return;
       }
       if (userData.state === 'orderType') {
-        const findMessageIndex: string = Object.keys(secondStepActions).find(item => item === message);
+        const findMessageIndex: string = Object.keys(secondStepActions).find((item) => item === message);
         if (!findMessageIndex) {
           await this.userService.saveState(userTelegramId, 'start');
           await this.sendMainKeyboard(userTelegramId);
@@ -240,7 +255,7 @@ export class TelegramService implements OnModuleInit {
         }
         const messageSecondStep = await secondStepActions[findMessageIndex];
         const buttons = await this.addButtonsToKeyboard(mainActionsButtons, 2);
-        const foundState = Object.values(secondStep).find(item => item.text === message)?.state;
+        const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
         await this.userService.saveState(userTelegramId, foundState);
         await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
       }
