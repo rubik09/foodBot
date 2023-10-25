@@ -1,7 +1,9 @@
 type Price = {
-    soapPrice: number,
+    soupPrice: number,
 
     saladPrice: number,
 
-    hotDish: number
+    hotDishPrice: number
 }
+
+export default Price;

@@ -6,13 +6,13 @@ import { Price } from 'src/schemas/price.schema';
 @Injectable()
 export class UpdatePriceProvider {
   constructor(@InjectModel(Price.name) private priceModel: Model<Price>) {}
-  async removeAllMenu() {
+  async removeAllPrices() {
     await this.priceModel.deleteMany();
   }
-  async uploadMenu(price: Price[]) {
+  async uploadPrice(price: Price[]) {
     await this.priceModel.insertMany(price);
   }
-  async getMenuPosition() {
+  async getPrices() {
     return await this.priceModel.find();
   }
 }

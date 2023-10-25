@@ -44,14 +44,4 @@ export class UserProvider {
   async getState(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).state;
   }
-  // async saveLanguage(userTelegramId: number, language: string, state: string = ''): Promise<User> {
-  //   let user = await this.userModel.findOne({ userTelegramId });
-  //   if (!user) {
-  //     user = new this.userModel({ userTelegramId, language, state });
-  //   } else {
-  //     user.language = language;
-  //     user.state = state;
-  //   }
-  //   return await user.save();
-  // }
 }

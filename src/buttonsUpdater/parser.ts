@@ -1,102 +1,24 @@
 import { googleApiService } from '../utils/googleApi/api';
-import Button from '../types/button';
+import Price from '../types/price';
 
-const arrToBtns = (arr: string[][]): Array<Array<Button | null>> => {
-  const res: Array<Array<Button | null>> = [];
-  for (let i = 0; i < arr.length; i++) {
-    const btns = [];
-    const el = arr[i];
-    for (let j = 0; j < el.length; j += 3) {
-      if (el[j]) {
-        btns.push({
-          button: el[j],
-          imageLink: el[j + 1] || '',
-          text: el[j + 2] || '',
-          path: '',
-          language: '',
-        });
-      } else {
-        btns.push(null);
-      }
-    }
-    res.push(btns);
-  }
-  return res.filter((el) => el.length);
-};
-
-const numToZeroIdx = (num: number): string => {
-  if (num < 10) return `0${num}`;
-  return `0${num}`;
-};
-
-class StackPath {
-  idx: number;
-  arr: number[];
-  delimetr: string;
-  numDecorateFunc;
-  constructor(delimetr: string, numDecorateFunc: (num: number) => string) {
-    this.arr = [];
-    this.idx = 1;
-    this.delimetr = delimetr;
-    this.numDecorateFunc = numDecorateFunc;
-  }
-  push(el: number) {
-    this.arr.push(el);
-  }
-  peek(): number | undefined {
-    return this.arr.at(-1);
-  }
-  get path(): string {
-    return this.arr.map(this.numDecorateFunc).join(this.delimetr);
-  }
-  get length(): number {
-    return this.arr.length;
-  }
-}
-
-const genPath = (arr: Array<Array<Button | null>>): Button[] => {
-  const res = [];
-  const stackPath = new StackPath('-', numToZeroIdx);
-  for (let i = 0; i < arr.length; i++) {
-    const subarr = arr[i];
-    for (let j = 0; j < subarr.length; j++) {
-      const el = subarr[j];
-
-      // check if element exist in table
-      if (!el) continue;
-      el.button = el.button.trim();
-      el.text = el.text.trim();
-      el.imageLink = el.imageLink.trim();
-      //check if element not emty (el.button always should exists)
-      if (!el.button && !el.text) continue;
-
-      if (stackPath.length < j || stackPath.length === 0) {
-        stackPath.push(stackPath.idx);
-      } else if (stackPath.length === j) {
-        stackPath.idx = 1;
-        stackPath.push(stackPath.idx);
-      } else if (j) {
-        stackPath.arr = stackPath.arr.slice(0, j + 1);
-        stackPath.idx = (stackPath.peek() || 0) + 1;
-        stackPath.arr[stackPath.length - 1] = stackPath.idx;
-        stackPath.idx = 1;
-      } else {
-        stackPath.idx = stackPath.arr[0];
-        stackPath.arr = [];
-        stackPath.idx++;
-        stackPath.push(stackPath.idx);
-      }
-
-      res.push({ ...el, path: stackPath.path });
-    }
-  }
+const arrToActions = (arr: string[][]): Price[] => {
+  const res: Price[] = [];
+  const menuForDay = getPrices(arr);
+  res.push(menuForDay);
   return res;
 };
+function getPrices(menuData: string[][]): Price {
+  return {
+    soupPrice: Number(menuData[0][1]!== undefined ? menuData[0][1] : ''),
+    saladPrice: Number(menuData[1][1] !== undefined ? menuData[1][1] : ''),
+    hotDishPrice: Number(menuData[2][1] !== undefined ? menuData[2][1] : ''),
+  };
+}
 
-export default async function createBtns(pageNumber: number): Promise<Button[]> {
+export default async function loadActions(pageNumber: number) {
   try {
-    const arr = await googleApiService.getButtons(pageNumber);
-    return genPath(arrToBtns(arr));
+    const actionArr = await googleApiService.getButtons(pageNumber);
+    return arrToActions(actionArr);
   } catch (err) {
     throw new Error(err);
   }
