@@ -209,6 +209,14 @@ export class TelegramService implements OnModuleInit {
 
       const userData = await this.userService.getUser(userTelegramId);
       if (!userData) return;
+      const date = new Date();
+      const zzz = date.getDay();
+      console.log(zzz)
+      if(zzz !== 0 ) {
+        await this.bot.sendMessage(userTelegramId, 'Заказаы можно делать пятница суббота');
+        await this.sendMainKeyboard(userTelegramId);
+        return;
+      } 
       if (message === 'Назад') {
         if (userData.state === 'menu') {
           const userOrderType: string = await this.userService.getOrderType(userTelegramId);
@@ -226,6 +234,7 @@ export class TelegramService implements OnModuleInit {
           return;
         }
       }
+
       if (message === 'В начало') {
         await this.sendMainKeyboard(userTelegramId);
         return;
