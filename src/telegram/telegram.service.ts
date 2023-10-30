@@ -13,6 +13,7 @@ import { UpdatePriceService } from 'src/buttonsUpdater/update-price.service';
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
   private readonly bot: TelegramBot;
+  private pollId: number;
   constructor(
     private readonly updateMenuService: UpdateMenuService,
     private readonly updatePricesService: UpdatePriceService,
@@ -21,6 +22,7 @@ export class TelegramService implements OnModuleInit {
     private configService: ConfigService,
   ) {
     this.bot = new TelegramBot(this.configService.get('app-config.BOT_TOKEN'), { polling: true });
+    this.pollId = 0;
   }
 
   // async increaseState(userTelegramId: number) {
@@ -119,6 +121,18 @@ export class TelegramService implements OnModuleInit {
     return newMenu;
   }
 
+  async startOrder(msg: Message) {
+    const mmm = await this.bot.sendPoll(
+      msg.from.id,
+      'Выбери день',
+      ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'],
+      {
+        allows_multiple_answers: true,
+        is_anonymous: false,
+      },
+    );
+    this.pollId = mmm.message_id;
+  }
   async showPrices() {
     const prices: Record<string, any> = await this.updatePricesService.getPrices();
 
@@ -173,9 +187,16 @@ export class TelegramService implements OnModuleInit {
       }
     });
 
+    this.bot.on('poll_answer', async (msg: any) => {
+      console.log(msg);
+      await this.bot.sendMessage(msg.from, `Вы выбрали ${msg.option_ids}`);
+      await this.bot.deleteMessage(msg.user.id, this.pollId);
+      this.pollId = 0;
+    });
+
     this.bot.on('message', async (msg: Message) => {
       interface SecondStepActions {
-        [key: string]: Promise<string>;
+        [key: string]: Promise<string> | any;
       }
       type SecondStep = {
         menu: {
@@ -183,6 +204,10 @@ export class TelegramService implements OnModuleInit {
           state: string;
         };
         price: {
+          text: string;
+          state: string;
+        };
+        order: {
           text: string;
           state: string;
         };
@@ -199,11 +224,16 @@ export class TelegramService implements OnModuleInit {
           text: 'Наши цены',
           state: 'prices',
         },
+        order: {
+          text: 'Cделать заказ',
+          state: 'order',
+        },
       };
 
       const secondStepActions: SecondStepActions = {
         [secondStep.menu.text]: this.showMenu(),
         [secondStep.price.text]: this.showPrices(),
+        [secondStep.order.text]: this.startOrder(msg),
       };
       const mainActionsButtons = ['Назад', 'В начало'];
 
@@ -211,12 +241,11 @@ export class TelegramService implements OnModuleInit {
       if (!userData) return;
       const date = new Date();
       const zzz = date.getDay();
-      console.log(zzz)
-      if(zzz !== 0 ) {
+      if (zzz === 0) {
         await this.bot.sendMessage(userTelegramId, 'Заказаы можно делать пятница суббота');
         await this.sendMainKeyboard(userTelegramId);
         return;
-      } 
+      }
       if (message === 'Назад') {
         if (userData.state === 'menu') {
           const userOrderType: string = await this.userService.getOrderType(userTelegramId);
@@ -267,6 +296,9 @@ export class TelegramService implements OnModuleInit {
         const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
         await this.userService.saveState(userTelegramId, foundState);
         await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
+      }
+      if (userData.state === 'order') {
+        console.log('state order');
       }
 
       // if (userData.state === 'lang') {
