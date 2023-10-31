@@ -9,6 +9,8 @@ import { MainMessage, mainMessages } from '../utils/telegram.constants';
 import { UpdateMenuService } from 'src/actionsUpdater/update-menu.service';
 import { UpdateMenuProvider } from '../actionsUpdater/update-menu.provider';
 import { UpdatePriceService } from 'src/buttonsUpdater/update-price.service';
+import { chownSync, stat } from 'fs';
+import { weekDays } from './telegram.constants';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -122,16 +124,12 @@ export class TelegramService implements OnModuleInit {
   }
 
   async startOrder(msg: Message) {
-    const mmm = await this.bot.sendPoll(
-      msg.from.id,
-      'Выбери день',
-      ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'],
-      {
-        allows_multiple_answers: true,
-        is_anonymous: false,
-      },
-    );
+    const mmm = await this.bot.sendPoll(msg.from.id, 'Выбери день', weekDays, {
+      allows_multiple_answers: true,
+      is_anonymous: false,
+    });
     this.pollId = mmm.message_id;
+    return 'done';
   }
   async showPrices() {
     const prices: Record<string, any> = await this.updatePricesService.getPrices();
@@ -187,14 +185,34 @@ export class TelegramService implements OnModuleInit {
       }
     });
 
-    this.bot.on('poll_answer', async (msg: any) => {
+    this.bot.on('poll_answer', async (msg: TelegramBot.PollAnswer) => {
       console.log(msg);
-      await this.bot.sendMessage(msg.from, `Вы выбрали ${msg.option_ids}`);
+      const days: string[] = [];
+      msg.option_ids.forEach((day) => {
+        days.push(weekDays[day]);
+      });
+      await this.bot.sendMessage(msg.user.id, `Вы выбрали ${days}`);
       await this.bot.deleteMessage(msg.user.id, this.pollId);
       this.pollId = 0;
     });
 
     this.bot.on('message', async (msg: Message) => {
+      const enum Steps {
+        menu = 'Посмотреть меню',
+        prices = 'Наши цены',
+        order = 'Cделать заказ',
+      }
+
+      type SecondStepButtons = {
+        [key in Steps]: (msg: Message) => Promise<string>;
+      };
+
+      const secondStepButtons: SecondStepButtons = {
+        [Steps.menu]: this.showMenu.bind(this),
+        [Steps.prices]: this.showPrices.bind(this),
+        [Steps.order]: this.startOrder.bind(this),
+      };
+
       interface SecondStepActions {
         [key: string]: Promise<string> | any;
       }
@@ -230,11 +248,11 @@ export class TelegramService implements OnModuleInit {
         },
       };
 
-      const secondStepActions: SecondStepActions = {
-        [secondStep.menu.text]: this.showMenu(),
-        [secondStep.price.text]: this.showPrices(),
-        [secondStep.order.text]: this.startOrder(msg),
-      };
+      // const secondStepActions: SecondStepActions = {
+      //   [secondStep.menu.text]: this.showMenu(),
+      //   [secondStep.price.text]: this.showPrices(),
+      //   [secondStep.order.text]: this.startOrder(msg),
+      // };
       const mainActionsButtons = ['Назад', 'В начало'];
 
       const userData = await this.userService.getUser(userTelegramId);
@@ -255,7 +273,7 @@ export class TelegramService implements OnModuleInit {
             return;
           }
           const buttons = await this.addButtonsToKeyboard(
-            Object.keys(secondStepActions).map((item) => item),
+            Object.keys(secondStepButtons).map((item) => item),
             1,
           );
           await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
@@ -276,7 +294,7 @@ export class TelegramService implements OnModuleInit {
           return;
         }
         const buttons = await this.addButtonsToKeyboard(
-          Object.keys(secondStepActions).map((item) => item),
+          Object.keys(secondStepButtons).map((item) => item),
           1,
         );
         await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
@@ -285,16 +303,17 @@ export class TelegramService implements OnModuleInit {
         return;
       }
       if (userData.state === 'orderType') {
-        const findMessageIndex: string = Object.keys(secondStepActions).find((item) => item === message);
+        const findMessageIndex: string = Object.keys(secondStepButtons).find((item) => item === message);
         if (!findMessageIndex) {
           await this.userService.saveState(userTelegramId, 'start');
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
-        const messageSecondStep = await secondStepActions[findMessageIndex];
+        const messageSecondStep = await secondStepButtons[findMessageIndex as Steps](msg);
         const buttons = await this.addButtonsToKeyboard(mainActionsButtons, 2);
         const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
         await this.userService.saveState(userTelegramId, foundState);
+        if (foundState === 'order') return;
         await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
       }
       if (userData.state === 'order') {
