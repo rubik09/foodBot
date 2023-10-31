@@ -15,7 +15,7 @@ import { weekDays } from './telegram.constants';
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
   private readonly bot: TelegramBot;
-  private pollId: number;
+  private usersPollId: Map<number, number>;
   constructor(
     private readonly updateMenuService: UpdateMenuService,
     private readonly updatePricesService: UpdatePriceService,
@@ -24,7 +24,7 @@ export class TelegramService implements OnModuleInit {
     private configService: ConfigService,
   ) {
     this.bot = new TelegramBot(this.configService.get('app-config.BOT_TOKEN'), { polling: true });
-    this.pollId = 0;
+    this.usersPollId = new Map();
   }
 
   // async increaseState(userTelegramId: number) {
@@ -128,7 +128,7 @@ export class TelegramService implements OnModuleInit {
       allows_multiple_answers: true,
       is_anonymous: false,
     });
-    this.pollId = mmm.message_id;
+    this.usersPollId.set(msg.from.id, mmm.message_id);
     return 'done';
   }
   async showPrices() {
@@ -186,14 +186,15 @@ export class TelegramService implements OnModuleInit {
     });
 
     this.bot.on('poll_answer', async (msg: TelegramBot.PollAnswer) => {
-      console.log(msg);
+      const pollId = this.usersPollId.get(msg.user.id);
+      if (!pollId) return;
       const days: string[] = [];
       msg.option_ids.forEach((day) => {
-        days.push(weekDays[day]);
+        days.push(` ${weekDays[day]}`);
       });
-      await this.bot.sendMessage(msg.user.id, `Вы выбрали ${days}`);
-      await this.bot.deleteMessage(msg.user.id, this.pollId);
-      this.pollId = 0;
+      await this.bot.sendMessage(msg.user.id, `Вы выбрали: ${days}`);
+      await this.bot.deleteMessage(msg.user.id, pollId);
+      this.usersPollId.delete(msg.user.id);
     });
 
     this.bot.on('message', async (msg: Message) => {
@@ -213,9 +214,6 @@ export class TelegramService implements OnModuleInit {
         [Steps.order]: this.startOrder.bind(this),
       };
 
-      interface SecondStepActions {
-        [key: string]: Promise<string> | any;
-      }
       type SecondStep = {
         menu: {
           text: string;
