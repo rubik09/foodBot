@@ -43,5 +43,3 @@ export const actionsMap = {
     actionName: 'begin',
   }
 };
-// Default greeting image will send if there are no specified image for current language
-export const greetingImageLink = 'https://i.ibb.co/rtWVBnw/gallery.jpg';

@@ -15,7 +15,6 @@ import { weekDays } from './telegram.constants';
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
   private readonly bot: TelegramBot;
-  private usersPollId: Map<number, number>;
   constructor(
     private readonly updateMenuService: UpdateMenuService,
     private readonly updatePricesService: UpdatePriceService,
@@ -24,14 +23,7 @@ export class TelegramService implements OnModuleInit {
     private configService: ConfigService,
   ) {
     this.bot = new TelegramBot(this.configService.get('app-config.BOT_TOKEN'), { polling: true });
-    this.usersPollId = new Map();
   }
-
-  // async increaseState(userTelegramId: number) {
-  //   let userData = await this.userService.getUser(userTelegramId);
-  //   let path = await this.buttonService.correctPath(userData.state, true);
-  //   await this.userService.saveState(userTelegramId, path);
-  // }
 
   async sendMainKeyboard(userTelegramId: number) {
     const markup: TelegramBot.ReplyKeyboardMarkup = {
@@ -128,7 +120,7 @@ export class TelegramService implements OnModuleInit {
       allows_multiple_answers: true,
       is_anonymous: false,
     });
-    this.usersPollId.set(msg.from.id, mmm.message_id);
+    this.userService.savePollId(msg.from.id, mmm.message_id);
     return 'done';
   }
   async showPrices() {
@@ -186,15 +178,16 @@ export class TelegramService implements OnModuleInit {
     });
 
     this.bot.on('poll_answer', async (msg: TelegramBot.PollAnswer) => {
-      const pollId = this.usersPollId.get(msg.user.id);
+      const pollId = await this.userService.getPollId(msg.user.id);
       if (!pollId) return;
       const days: string[] = [];
       msg.option_ids.forEach((day) => {
-        days.push(` ${weekDays[day]}`);
+        days.push(` ${day}`);
       });
       await this.bot.sendMessage(msg.user.id, `Вы выбрали: ${days}`);
+      await this.userService.saveOrderDays(msg.user.id, days);
       await this.bot.deleteMessage(msg.user.id, pollId);
-      this.usersPollId.delete(msg.user.id);
+      await this.userService.updatePollId(msg.user.id)
     });
 
     this.bot.on('message', async (msg: Message) => {
@@ -245,12 +238,6 @@ export class TelegramService implements OnModuleInit {
           state: 'order',
         },
       };
-
-      // const secondStepActions: SecondStepActions = {
-      //   [secondStep.menu.text]: this.showMenu(),
-      //   [secondStep.price.text]: this.showPrices(),
-      //   [secondStep.order.text]: this.startOrder(msg),
-      // };
       const mainActionsButtons = ['Назад', 'В начало'];
 
       const userData = await this.userService.getUser(userTelegramId);
@@ -263,7 +250,7 @@ export class TelegramService implements OnModuleInit {
         return;
       }
       if (message === 'Назад') {
-        if (userData.state === 'menu') {
+        if (userData.state === 'menu' || userData.state === 'prices') {
           const userOrderType: string = await this.userService.getOrderType(userTelegramId);
           const findMessage = mainMessages.findIndex((item) => item.orderType === userOrderType);
           if (findMessage < 0) {
@@ -315,63 +302,9 @@ export class TelegramService implements OnModuleInit {
         await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
       }
       if (userData.state === 'order') {
-        console.log('state order');
+        
       }
-
-      // if (userData.state === 'lang') {
-      //   if (langMap[message as keyof typeof langMap]) {
-      //     const langCode = langMap[message as keyof typeof langMap];
-      //     await this.userService.saveLanguage(userTelegramId, langCode);
-      //     this.bot.sendMessage(userTelegramId, `${message} ✅`);
-      //     return await this.returnMainMenu(userTelegramId);
-      //   } else {
-      //     this.bot.sendMessage(userTelegramId, botInternationalMessages.notFoundLang);
-      //     return await this.sendLangKeyboard(userTelegramId);
-      //   }
-      // }
-
-      // const newMainActions = languageService.getActionsByLang(userData.language);
-      // const foundAction = newMainActions.find((action) => action?.button === message);
-      // if (foundAction) {
-      //   try {
-      //     switch (foundAction.type) {
-      //       case actionsMap.back.actionName:
-      //         this.back(msg, userData.language);
-      //         return;
-      //       case actionsMap.begin.actionName:
-      //         this.begin(msg);
-      //         return;
-      //       case actionsMap.support.actionName:
-      //         this.support(msg, userData.language);
-      //         return;
-      //       case actionsMap.greeting.actionName:
-      //         this.greeting(msg, userData.language);
-      //         return;
-      //     }
-      //   } catch (error) {
-      //     console.error(error);
-      //   }
-      // }
-      // try {
-      //   const currentButtons = await this.buttonService.getButtonsByPath(userData.state, userData.language);
-      //   const targetButton = currentButtons.find((item) => item.button === message);
-
-      //   if (targetButton) {
-      //     const { path, text, imageLink } = targetButton;
-      //     await this.userService.saveState(userTelegramId, path);
-      //     const buttons = await this.buttonService.findButtonsByPath(path, userData.language);
-      //     if (imageLink) {
-      //       this.sendImageMessageAndKeyboard(userTelegramId, text, buttons, imageLink);
-      //     } else {
-      //       this.sendMessageAndKeyboard(userTelegramId, text, buttons);
-      //     }
-      //   } else {
-      //     this.returnMainMenu(userTelegramId);
-      //   }
-      // } catch (error) {
-      //   console.error(error);
-      //   this.returnMainMenu(userTelegramId);
-      // }
+   
     });
   }
   async onModuleInit() {

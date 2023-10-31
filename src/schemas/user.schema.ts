@@ -16,6 +16,15 @@ export class User {
   
   @Prop()
   state: string;
+
+  @Prop()
+  pollId: number;
+
+  @Prop()
+  orderDays: string [];
+
+  @Prop({default: false})
+  orderDone: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

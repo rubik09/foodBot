@@ -24,12 +24,27 @@ export class UserService {
   async saveOrderType(userTelegramId: number, orderType: string): Promise<User> {
     return this.userProvider.saveOrderType(userTelegramId, orderType);
   }
+  async savePollId(userTelegramId: number, pollId: number): Promise<User> {
+    return this.userProvider.savePollId(userTelegramId, pollId);
+  }
+  async saveOrderDays(userTelegramId: number, orderDays: string[]): Promise<User> {
+    return this.userProvider.saveOrderDays(userTelegramId, orderDays);
+  }
+  async saveOrderDone(userTelegramId: number, orderDone: boolean): Promise<User> {
+    return this.userProvider.saveOrderDone(userTelegramId, orderDone);
+  }
+  async updatePollId(userTelegramId: number): Promise<User> {
+    return this.userProvider.updatePollId(userTelegramId);
+  }
 
   async getState(userTelegramId: number): Promise<string> {
     return this.userProvider.getState(userTelegramId);
   }
   async getOrderType(userTelegramId: number): Promise<string> {
     return this.userProvider.getOrderType(userTelegramId);
+  }
+  async getPollId(userTelegramId: number): Promise<number> {
+    return (await this.userProvider.getPollId(userTelegramId));
   }
 
   // async saveLanguage(userTelegramId: number, language: string, state: string = ''): Promise<User> {
