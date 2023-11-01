@@ -105,14 +105,58 @@ export class TelegramService implements OnModuleInit {
     }
     return result.join('\n\n');
   }
-  async showMenu() {
+  async getMenuArray() {
     const menuDb = await this.updateMenuService.getMenu();
     const menuAr: any[] = [];
     Object.values(menuDb).map((item) => menuAr.push(item));
+    return menuAr;
+  }
 
+  async showMenu() {
+    const menuAr = await this.getMenuArray();
     const formattedMenu = await this.formatMenu(menuAr);
     const newMenu = await this.printMenuForDay(formattedMenu);
     return newMenu;
+  }
+  async createDailyMenuPoll(chatId: number, order: any) {
+    const options = [];
+    if (order.salad) {
+      options.push(order.salad);
+      options.push(`${order.salad} x2`);
+    }
+    if (order.soup) {
+      options.push(order.soup);
+      options.push(`${order.soup} x2`);
+    }
+    if (order.hotDish1) {
+      options.push(order.hotDish1);
+      options.push(`${order.hotDish1} x2`);
+    }
+    if (order.hotDish2) {
+      options.push(order.hotDish2);
+      options.push(`${order.hotDish2} x2`);
+    }
+    if (order.hotDish3) {
+      options.push(order.hotDish3);
+      options.push(`${order.hotDish3} x2`);
+    }
+
+    const mmm = await this.bot.sendPoll(chatId, order.weekDay, options, {
+      allows_multiple_answers: true,
+      is_anonymous: false,
+    });
+  }
+
+  async makeAllWeekPolls(chatId: number, days: number[]) {
+    const orders = await this.getMenuArray();
+    // orders.forEach(async (item) => {
+    //   await this.createDailyMenuPoll(chatId, item);
+    // });
+    for (let i = 0; i <= orders.length; i++) {
+      if (days.includes(i)) {
+        await this.createDailyMenuPoll(chatId, orders[i]);
+      }
+    }
   }
 
   async startOrder(msg: Message) {
@@ -186,8 +230,10 @@ export class TelegramService implements OnModuleInit {
       });
       await this.bot.sendMessage(msg.user.id, `Вы выбрали: ${days}`);
       await this.userService.saveOrderDays(msg.user.id, days);
-      await this.bot.deleteMessage(msg.user.id, pollId);
-      await this.userService.updatePollId(msg.user.id)
+      await this.bot.stopPoll(msg.user.id, pollId);
+      // await this.bot.deleteMessage(msg.user.id, pollId);
+      await this.userService.updatePollId(msg.user.id);
+      await this.makeAllWeekPolls(msg.user.id, msg.option_ids);
     });
 
     this.bot.on('message', async (msg: Message) => {
@@ -302,9 +348,7 @@ export class TelegramService implements OnModuleInit {
         await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
       }
       if (userData.state === 'order') {
-        
       }
-   
     });
   }
   async onModuleInit() {
