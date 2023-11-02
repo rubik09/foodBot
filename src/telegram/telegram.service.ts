@@ -231,7 +231,6 @@ export class TelegramService implements OnModuleInit {
       await this.bot.sendMessage(msg.user.id, `Вы выбрали: ${days}`);
       await this.userService.saveOrderDays(msg.user.id, days);
       await this.bot.stopPoll(msg.user.id, pollId);
-      // await this.bot.deleteMessage(msg.user.id, pollId);
       await this.userService.updatePollId(msg.user.id);
       await this.makeAllWeekPolls(msg.user.id, msg.option_ids);
     });
