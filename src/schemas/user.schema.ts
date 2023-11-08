@@ -13,7 +13,7 @@ export class User {
 
   @Prop()
   orderType: string;
-  
+
   @Prop()
   state: string;
 
@@ -21,9 +21,9 @@ export class User {
   pollId: number;
 
   @Prop()
-  orderDays: string [];
+  orderDays: string[];
 
-  @Prop({default: false})
+  @Prop({ default: false })
   orderDone: boolean;
 }
 

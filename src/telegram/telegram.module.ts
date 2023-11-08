@@ -10,8 +10,8 @@ import { UpdatePriceModule } from 'src/buttonsUpdater/update-price.module';
     forwardRef(() => UserModule),
     forwardRef(() => OrderModule),
     forwardRef(() => UpdateMenuModule),
-    forwardRef(() => UpdatePriceModule)
+    forwardRef(() => UpdatePriceModule),
   ],
-  providers: [TelegramService]
+  providers: [TelegramService],
 })
 export class TelegramModule {}

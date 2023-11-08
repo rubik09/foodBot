@@ -16,6 +16,6 @@ export class UpdateMenuProvider {
     return await this.menuModel.find();
   }
   async getMenuPosition1() {
-    return await this.menuModel.findOne({weekDay : 'Понеделик'});
+    return await this.menuModel.findOne({ weekDay: 'Понеделик' });
   }
 }

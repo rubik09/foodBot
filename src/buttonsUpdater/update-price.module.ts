@@ -6,9 +6,9 @@ import { UpdatePriceController } from './update-price.controller';
 import { UpdatePriceService } from './update-price.service';
 
 @Module({
-    exports: [UpdatePriceService, UpdatePriceProvider],
-    imports: [MongooseModule.forFeature([{ name: Price.name, schema: PriceSchema }])],
-    providers: [UpdatePriceService, UpdatePriceProvider],
-    controllers: [UpdatePriceController],
-  })
-  export class UpdatePriceModule {}
+  exports: [UpdatePriceService, UpdatePriceProvider],
+  imports: [MongooseModule.forFeature([{ name: Price.name, schema: PriceSchema }])],
+  providers: [UpdatePriceService, UpdatePriceProvider],
+  controllers: [UpdatePriceController],
+})
+export class UpdatePriceModule {}

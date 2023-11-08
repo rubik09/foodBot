@@ -4,7 +4,6 @@ import { HydratedDocument } from 'mongoose';
 export type OrderDocument = HydratedDocument<Order>;
 
 @Schema({ collection: `orders` })
-
 class Salad {
   @Prop()
   name: string;
@@ -49,11 +48,10 @@ export class Order {
   orderType: string;
 
   @Prop()
-  date: string
+  date: string;
 
   @Prop()
-  price: number
-
+  price: number;
 }
 
 export const Orderchema = SchemaFactory.createForClass(Order);

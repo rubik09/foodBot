@@ -118,6 +118,7 @@ export class TelegramService implements OnModuleInit {
     const newMenu = await this.printMenuForDay(formattedMenu);
     return newMenu;
   }
+
   async createDailyMenuPoll(chatId: number, order: any) {
     const options = [];
     if (order.salad) {
@@ -140,23 +141,54 @@ export class TelegramService implements OnModuleInit {
       options.push(order.hotDish3);
       options.push(`${order.hotDish3} x2`);
     }
-
+    return options;
+  }
+  async sendDailyMenuPoll(chatId: number, order: any) {
+    console.log('send')
+    const options = await this.createDailyMenuPoll(chatId, order);
     const mmm = await this.bot.sendPoll(chatId, order.weekDay, options, {
       allows_multiple_answers: true,
       is_anonymous: false,
     });
   }
+  async saveChoice(chatId: number, msg: TelegramBot.PollAnswer) {
+    const choice = msg.option_ids;
 
-  async makeAllWeekPolls(chatId: number, days: number[]) {
     const orders = await this.getMenuArray();
-    // orders.forEach(async (item) => {
-    //   await this.createDailyMenuPoll(chatId, item);
-    // });
-    for (let i = 0; i <= orders.length; i++) {
-      if (days.includes(i)) {
-        await this.createDailyMenuPoll(chatId, orders[i]);
-      }
-    }
+    const state = await this.userService.getState(msg.user.id);
+    const options = await this.createDailyMenuPoll(chatId, orders[Number(state)]);
+    choice.forEach(async (nu) => await this.bot.sendMessage(msg.user.id, `Вы выбрали: ${options[nu]}`));
+
+    const buttons = await this.addButtonsToKeyboard(['Да', 'Нет'], 2);
+    await this.sendMessageAndKeyboard(chatId, 'Дополнения?', buttons);
+    const ordeR = {
+      userTelegramId: msg.user.id,
+      fullName: msg.user.first_name,
+      salad: {
+        name: '',
+        quantity: 0,
+      },
+      soup: {
+        name: '',
+        quantity: 0,
+      },
+      hotDish: {
+        name: '',
+        quantity: 0,
+      },
+      extra: '',
+      orderType: '',
+      date: '',
+      price: 1,
+    };
+    await this.orderService.saveOrder(ordeR);
+  }
+
+  async makeAllWeekPolls(chatId: number, day: number) {
+    console.log('here')
+    const orders = await this.getMenuArray();
+    await this.userService.saveState(chatId, `${day}`);
+    await this.sendDailyMenuPoll(chatId, orders[day]);
   }
 
   async startOrder(msg: Message) {
@@ -222,18 +254,23 @@ export class TelegramService implements OnModuleInit {
     });
 
     this.bot.on('poll_answer', async (msg: TelegramBot.PollAnswer) => {
-      const pollId = await this.userService.getPollId(msg.user.id);
+      const userTelegramId = msg.user.id;
+      const nums = ['0', '1', '2', '3', '4'];
+      const state = await this.userService.getState(userTelegramId);
+      if (nums.includes(state)) {
+        this.saveChoice(userTelegramId, msg);
+      }
+      const pollId = await this.userService.getPollId(userTelegramId);
       if (!pollId) return;
       const days: string[] = [];
       msg.option_ids.forEach((day) => {
-        days.push(` ${day}`);
+        days.push(`${day}`);
       });
-      await this.bot.sendMessage(msg.user.id, `Вы выбрали: ${days}`);
-      await this.userService.saveOrderDays(msg.user.id, days);
-      await this.bot.stopPoll(msg.user.id, pollId);
-      // await this.bot.deleteMessage(msg.user.id, pollId);
-      await this.userService.updatePollId(msg.user.id);
-      await this.makeAllWeekPolls(msg.user.id, msg.option_ids);
+      await this.bot.sendMessage(userTelegramId, `Вы выбрали: ${days}`);
+      await this.userService.saveOrderDays(userTelegramId, days);
+      await this.bot.stopPoll(userTelegramId, pollId);
+      await this.userService.updatePollId(userTelegramId);
+      await this.makeAllWeekPolls(userTelegramId, msg.option_ids[0]);
     });
 
     this.bot.on('message', async (msg: Message) => {
@@ -269,7 +306,6 @@ export class TelegramService implements OnModuleInit {
       };
       const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
-
       const secondStep: SecondStep = {
         menu: {
           text: 'Посмотреть меню',
@@ -288,6 +324,30 @@ export class TelegramService implements OnModuleInit {
 
       const userData = await this.userService.getUser(userTelegramId);
       if (!userData) return;
+      const nums = ['0', '1', '2', '3', '4'];
+      const state: string = await this.userService.getState(userTelegramId);
+      if (nums.includes(state)) {
+        const orderDays: string[] = await this.userService.getOrderDays(userTelegramId);
+        const indexDay = orderDays.indexOf(state);
+        if (msg.text == 'Да') {
+          await this.bot.sendMessage(userTelegramId, `Напишите дополнение`);
+        } else if (msg.text == 'Нет') {
+          if (indexDay + 1 < orderDays.length) {
+            console.log(orderDays, Number(orderDays[indexDay + 1]));
+            this.makeAllWeekPolls(userTelegramId, Number(orderDays[indexDay + 1]));
+          } else {
+            await this.bot.sendMessage(userTelegramId, `Заказ закончен`);
+          }
+        } else {
+          await this.orderService.updateOrder(userTelegramId, state, message);
+          if (indexDay + 1 < orderDays.length) {
+            this.makeAllWeekPolls(userTelegramId, Number(orderDays[indexDay + 1]));
+          } else {
+            await this.bot.sendMessage(userTelegramId, `Заказ закончен`);
+          }
+        }
+        return;
+      }
       const date = new Date();
       const zzz = date.getDay();
       if (zzz === 0) {

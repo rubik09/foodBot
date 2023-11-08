@@ -4,13 +4,9 @@ import { UserProvider } from './user.provider';
 
 @Injectable()
 export class UserService {
-  constructor(private userProvider: UserProvider) { }
+  constructor(private userProvider: UserProvider) {}
 
-  async createUser(
-    userTelegramId: number,
-    username: string,
-    state: string = 'start'
-  ): Promise<User> {
+  async createUser(userTelegramId: number, username: string, state = 'start'): Promise<User> {
     return this.userProvider.createUser(userTelegramId, username, state);
   }
 
@@ -30,6 +26,9 @@ export class UserService {
   async saveOrderDays(userTelegramId: number, orderDays: string[]): Promise<User> {
     return this.userProvider.saveOrderDays(userTelegramId, orderDays);
   }
+  async getOrderDays(userTelegramId: number): Promise<string[]> {
+    return this.userProvider.getOrderDays(userTelegramId);
+  }
   async saveOrderDone(userTelegramId: number, orderDone: boolean): Promise<User> {
     return this.userProvider.saveOrderDone(userTelegramId, orderDone);
   }
@@ -44,7 +43,7 @@ export class UserService {
     return this.userProvider.getOrderType(userTelegramId);
   }
   async getPollId(userTelegramId: number): Promise<number> {
-    return (await this.userProvider.getPollId(userTelegramId));
+    return await this.userProvider.getPollId(userTelegramId);
   }
 
   // async saveLanguage(userTelegramId: number, language: string, state: string = ''): Promise<User> {

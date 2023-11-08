@@ -1,9 +1,9 @@
 type Price = {
-    soupPrice: number,
+  soupPrice: number;
 
-    saladPrice: number,
+  saladPrice: number;
 
-    hotDishPrice: number
-}
+  hotDishPrice: number;
+};
 
 export default Price;

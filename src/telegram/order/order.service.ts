@@ -9,7 +9,14 @@ import { actionsMap } from '../../utils/telegram.constants';
 @Injectable()
 export class OrderService {
   constructor(@InjectModel(Order.name) private orderModel: Model<Order>) {}
-  
+  async saveOrder(order: Order) {
+    await this.orderModel.create(order);
+  }
+  async updateOrder(userTelegramId: number, day: string, extra: string) {
+    const filter = { userTelegramId, day };
+    const update = { extra: extra };
+    return await this.orderModel.findOneAndUpdate(filter, update);
+  }
   // async getButton(path: string, language: string): Promise<Order | null> {
   //   return await this.buttonModel.findOne({ path, language });
   // }
