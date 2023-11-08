@@ -40,7 +40,7 @@ export class UserProvider {
     return await this.userModel.findOneAndUpdate(filter, update);
   }
 
-  async saveOrderDays(userTelegramId: number, orderDays: string []): Promise<User> {
+  async saveOrderDays(userTelegramId: number, orderDays: string[]): Promise<User> {
     let user = await this.userModel.findOne({ userTelegramId });
     if (!user) {
       user = new this.userModel({ userTelegramId, orderDays });

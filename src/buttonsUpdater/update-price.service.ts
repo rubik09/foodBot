@@ -18,7 +18,7 @@ export class UpdatePriceService implements OnModuleInit {
     await this.updatePriceProvider.uploadPrice(res);
     return JSON.stringify({ message: httpResponceMessages.success });
   }
-  async getPrices () {
+  async getPrices() {
     const result = await this.updatePriceProvider.getPrices();
     return result;
   }

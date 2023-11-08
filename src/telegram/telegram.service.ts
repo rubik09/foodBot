@@ -144,7 +144,7 @@ export class TelegramService implements OnModuleInit {
     return options;
   }
   async sendDailyMenuPoll(chatId: number, order: any) {
-    console.log('send')
+    console.log('send');
     const options = await this.createDailyMenuPoll(chatId, order);
     const mmm = await this.bot.sendPoll(chatId, order.weekDay, options, {
       allows_multiple_answers: true,
@@ -185,7 +185,7 @@ export class TelegramService implements OnModuleInit {
   }
 
   async makeAllWeekPolls(chatId: number, day: number) {
-    console.log('here')
+    console.log('here');
     const orders = await this.getMenuArray();
     await this.userService.saveState(chatId, `${day}`);
     await this.sendDailyMenuPoll(chatId, orders[day]);
