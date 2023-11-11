@@ -39,6 +39,9 @@ export class UserService {
   async getState(userTelegramId: number): Promise<string> {
     return this.userProvider.getState(userTelegramId);
   }
+  async getOrderDone(userTelegramId: number): Promise<boolean> {
+    return this.userProvider.getOrderDone(userTelegramId);
+  }
   async getOrderType(userTelegramId: number): Promise<string> {
     return this.userProvider.getOrderType(userTelegramId);
   }

@@ -9,10 +9,10 @@ export class Price {
   soupPrice: number;
 
   @Prop()
-  saladPrice: number;
+  hotDishPrice: number;
 
   @Prop()
-  hotDishPrice: number;
+  saladPrice: number;
 }
 
 export const PriceSchema = SchemaFactory.createForClass(Price);

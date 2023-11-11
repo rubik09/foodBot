@@ -78,6 +78,9 @@ export class UserProvider {
   async getState(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).state;
   }
+  async getOrderDone(userTelegramId: number): Promise<boolean> {
+    return (await this.userModel.findOne({ userTelegramId })).orderDone;
+  }
 
   async getPollId(userTelegramId: number): Promise<number> {
     return (await this.userModel.findOne({ userTelegramId })).pollId;
