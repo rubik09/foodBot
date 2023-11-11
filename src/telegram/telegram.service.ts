@@ -356,13 +356,14 @@ export class TelegramService implements OnModuleInit {
     });
     this.bot.onText(/\/delete_order/, async (msg: any) => {
       const userTelegramId = msg.from.id;
-      if (await this.orderService.get(userTelegramId)) {
-        await this.orderService.del(userTelegramId);
-      }
-      await this.userService.saveOrderDone(userTelegramId, false);
-      await this.bot.sendMessage(userTelegramId, 'Ваш текущий заказ удалён.\nТеперь вы можете составить новый заказ.');
-      await this.sendMainKeyboard(userTelegramId);
-      await this.userService.saveState(userTelegramId, 'start');
+      const buttons = await this.addButtonsToKeyboard(['Да, уверен', 'Нет, кажется, это ошибка'], 1);
+
+      await this.sendMessageAndKeyboard(
+        userTelegramId,
+        'Ваш текущий заказ будет удалён.\nВы уверены, что хотите это сделать?',
+        buttons,
+      );
+      await this.userService.saveState(userTelegramId, 'deleteOrder');
     });
 
     this.bot.on('poll_answer', async (msg: TelegramBot.PollAnswer) => {
@@ -425,6 +426,9 @@ export class TelegramService implements OnModuleInit {
       if (pollId) {
         await this.bot.stopPoll(userTelegramId, pollId);
         await this.userService.updatePollId(userTelegramId);
+
+        await this.sendMainKeyboard(userTelegramId);
+        await this.userService.saveState(userTelegramId, 'start');
       }
 
       const secondStep: SecondStep = {
@@ -479,6 +483,22 @@ export class TelegramService implements OnModuleInit {
           await this.userService.saveState(userTelegramId, 'start');
           return;
         }
+      }
+      if (state === 'deleteOrder') {
+        if (msg.text == 'Да, уверен') {
+          await this.userService.saveOrderDone(userTelegramId, true);
+          if (await this.orderService.get(userTelegramId)) {
+            await this.orderService.del(userTelegramId);
+          }
+          await this.userService.saveOrderDone(userTelegramId, false);
+          await this.bot.sendMessage(
+            userTelegramId,
+            'Ваш текущий заказ удалён.\nТеперь вы можете составить новый заказ.',
+          );
+        }
+        await this.sendMainKeyboard(userTelegramId);
+        await this.userService.saveState(userTelegramId, 'start');
+        return;
       }
       const date = new Date();
       const zzz = date.getDay();
