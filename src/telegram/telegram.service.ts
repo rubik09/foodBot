@@ -237,7 +237,7 @@ export class TelegramService implements OnModuleInit {
         userTelegramId,
         'Ваш заказ сформирован, если вы хотите сбросить текущий заказ, то воспользуйтесь командой \n/delete_order',
       );
-      return;
+      return 'done';
     }
     if (await this.orderService.get(msg.chat.id)) {
       await this.orderService.del(userTelegramId);
@@ -247,7 +247,19 @@ export class TelegramService implements OnModuleInit {
       is_anonymous: false,
     });
     this.userService.savePollId(msg.from.id, mmm.message_id);
-    return 'done';
+    return;
+  }
+  async myOrder(msg: Message) {
+    const userTelegramId = msg.from.id;
+    const orders = await this.getAllOrders(userTelegramId);
+    if (orders) {
+      await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
+    } else {
+      await this.bot.sendMessage(userTelegramId, `У вас еще нет подтвержденного заказа`);
+    }
+    await this.userService.saveState(userTelegramId, 'start');
+    await this.sendMainKeyboard(userTelegramId);
+    return 'Возвращаемся в главное меню';
   }
   async getPrices() {
     const prices: Record<string, any> = await this.updatePricesService.getPrices();
@@ -339,6 +351,7 @@ export class TelegramService implements OnModuleInit {
 
   async getAllOrders(userTelegramId: number): Promise<string> {
     const orders = await this.orderService.get(userTelegramId);
+    if (!orders[0]) return '';
     return await this.formatOrders(orders);
   }
 
@@ -356,6 +369,9 @@ export class TelegramService implements OnModuleInit {
     });
     this.bot.onText(/\/delete_order/, async (msg: any) => {
       const userTelegramId = msg.from.id;
+
+      const orders = await this.getAllOrders(userTelegramId);
+      await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
       const buttons = await this.addButtonsToKeyboard(['Да, уверен', 'Нет, кажется, это ошибка'], 1);
 
       await this.sendMessageAndKeyboard(
@@ -393,6 +409,7 @@ export class TelegramService implements OnModuleInit {
         menu = 'Посмотреть меню',
         prices = 'Наши цены',
         order = 'Cделать заказ',
+        myOrder = 'Мой заказ',
       }
 
       type SecondStepButtons = {
@@ -403,6 +420,7 @@ export class TelegramService implements OnModuleInit {
         [Steps.menu]: this.showMenu.bind(this),
         [Steps.prices]: this.showPrices.bind(this),
         [Steps.order]: this.startOrder.bind(this),
+        [Steps.myOrder]: this.myOrder.bind(this),
       };
 
       type SecondStep = {
@@ -415,6 +433,10 @@ export class TelegramService implements OnModuleInit {
           state: string;
         };
         order: {
+          text: string;
+          state: string;
+        };
+        myOrder: {
           text: string;
           state: string;
         };
@@ -443,6 +465,10 @@ export class TelegramService implements OnModuleInit {
         order: {
           text: 'Cделать заказ',
           state: 'order',
+        },
+        myOrder: {
+          text: 'Мой заказ',
+          state: 'myOrder',
         },
       };
       const mainActionsButtons = ['Назад', 'В начало'];
@@ -473,10 +499,12 @@ export class TelegramService implements OnModuleInit {
         }
         return;
       }
+
       if (state === 'confirm') {
         if (msg.text == 'Да, конечно') {
           await this.userService.saveOrderDone(userTelegramId, true);
-          await this.bot.sendMessage(userTelegramId, 'Ваш заказ потвержден');
+          await this.bot.sendMessage(userTelegramId, 'Спасибо,\nВаш заказ потвержден!');
+          await this.sendMainKeyboard(userTelegramId);
           await this.userService.saveState(userTelegramId, 'start');
         } else if (msg.text == 'Нет, начать заново') {
           await this.sendMainKeyboard(userTelegramId);
@@ -502,7 +530,7 @@ export class TelegramService implements OnModuleInit {
       }
       const date = new Date();
       const zzz = date.getDay();
-      if (zzz === 0) {
+      if (zzz === 1) {
         await this.bot.sendMessage(userTelegramId, 'Заказы можно делать пятница, суббота');
         await this.sendMainKeyboard(userTelegramId);
         return;
@@ -553,6 +581,7 @@ export class TelegramService implements OnModuleInit {
           return;
         }
         const messageSecondStep = await secondStepButtons[findMessageIndex as Steps](msg);
+        if (findMessageIndex === 'myOrder') return;
         const buttons = await this.addButtonsToKeyboard(mainActionsButtons, 2);
         const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
         await this.userService.saveState(userTelegramId, foundState);
@@ -561,6 +590,7 @@ export class TelegramService implements OnModuleInit {
       }
       if (userData.state === 'order') {
       }
+ 
     });
   }
   async onModuleInit() {
