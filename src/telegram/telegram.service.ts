@@ -251,14 +251,16 @@ export class TelegramService implements OnModuleInit {
   }
   async myOrder(msg: Message) {
     const userTelegramId = msg.from.id;
-    const orders = await this.getAllOrders(userTelegramId);
-    if (orders) {
+    const isOrder = await this.userService.getOrderDone(userTelegramId);
+    if (isOrder) {
+      const orders = await this.getAllOrders(userTelegramId);
       await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
     } else {
       await this.bot.sendMessage(userTelegramId, `У вас еще нет подтвержденного заказа`);
     }
     await this.userService.saveState(userTelegramId, 'start');
     await this.sendMainKeyboard(userTelegramId);
+
     return 'Возвращаемся в главное меню';
   }
   async getPrices() {
@@ -369,7 +371,13 @@ export class TelegramService implements OnModuleInit {
     });
     this.bot.onText(/\/delete_order/, async (msg: any) => {
       const userTelegramId = msg.from.id;
-
+      const date = new Date();
+      const zzz = date.getDay();
+      if (zzz === 1) {
+        await this.bot.sendMessage(userTelegramId, 'Заказы можно удалять пятница, суббота');
+        await this.sendMainKeyboard(userTelegramId);
+        return;
+      }
       const orders = await this.getAllOrders(userTelegramId);
       await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
       const buttons = await this.addButtonsToKeyboard(['Да, уверен', 'Нет, кажется, это ошибка'], 1);
@@ -581,16 +589,14 @@ export class TelegramService implements OnModuleInit {
           return;
         }
         const messageSecondStep = await secondStepButtons[findMessageIndex as Steps](msg);
-        if (findMessageIndex === 'myOrder') return;
         const buttons = await this.addButtonsToKeyboard(mainActionsButtons, 2);
         const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
         await this.userService.saveState(userTelegramId, foundState);
-        if (foundState === 'order') return;
+        if (foundState === 'order' || foundState === 'myOrder') return;
         await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
       }
       if (userData.state === 'order') {
       }
- 
     });
   }
   async onModuleInit() {
