@@ -48,6 +48,9 @@ export class UserService {
   async getOrderType(userTelegramId: number): Promise<string> {
     return this.userProvider.getOrderType(userTelegramId);
   }
+  async getFullNameById(userTelegramId: number): Promise<string> {
+    return await this.userProvider.getFullNameById(userTelegramId);
+  }
   async getPollId(userTelegramId: number): Promise<number> {
     return await this.userProvider.getPollId(userTelegramId);
   }

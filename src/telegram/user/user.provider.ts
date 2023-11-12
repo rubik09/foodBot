@@ -5,7 +5,7 @@ import { User } from '../../schemas/user.schema';
 
 @Injectable()
 export class UserProvider {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) { }
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
   async createUser(userTelegramId: number, username: string, state = 'start'): Promise<User> {
     return await this.userModel.create({ userTelegramId, username, state });
   }
@@ -57,7 +57,7 @@ export class UserProvider {
     } else {
       user.fullName = fullName;
     }
-    return await user.save(); 
+    return await user.save();
   }
   async getOrderDays(userTelegramId: number): Promise<string[]> {
     return (await this.userModel.findOne({ userTelegramId })).orderDays;
@@ -85,6 +85,9 @@ export class UserProvider {
   async getOrderType(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).orderType;
   }
+  async getFullNameById(userTelegramId: number): Promise<string> {
+    return (await this.userModel.findOne({ userTelegramId })).fullName;
+  }
   async getState(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).state;
   }
@@ -93,13 +96,10 @@ export class UserProvider {
   }
   async changeAllStatusOrderDone(): Promise<boolean> {
     try {
-      const result = await this.userModel.updateMany(
-        {},
-        { $set: { orderDone: false } }
-      );
+      const result = await this.userModel.updateMany({}, { $set: { orderDone: false } });
       return !!result.modifiedCount;
     } catch (error) {
-      console.error("Error updating orderDone status for all:", error);
+      console.error('Error updating orderDone status for all:', error);
       return false;
     }
   }

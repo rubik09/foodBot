@@ -31,7 +31,6 @@ type SecondStep = {
   };
 };
 
-
 export const secondStep: SecondStep = {
   menu: {
     text: 'Посмотреть меню',

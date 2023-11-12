@@ -6,7 +6,7 @@ export default registerAs(
   'app-config',
   (): any =>
     ({
-      API_PREFIX: '/example',
+      API_PREFIX: '/api',
       API_VERSION: '/v1',
       SERVICE_NAME: pack.name,
       DOCS_URL: '/docs',
@@ -16,6 +16,6 @@ export default registerAs(
       MONGO_URL: process.env.MONGO_URL,
       AUTH_HEADER_SECRET: process.env.AUTH_HEADER_SECRET,
       BOT_TOKEN: process.env.BOT_TOKEN,
-      MANAGER_ID: process.env.MANAGER_ID
+      MANAGER_ID: process.env.MANAGER_ID,
     } as const),
 );

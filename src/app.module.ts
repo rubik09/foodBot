@@ -13,6 +13,7 @@ import { OrderModule } from './telegram/order/order.module';
 import { UpdateMenuModule } from './actionsUpdater/update-menu.module';
 import { ConfigService } from '@nestjs/config';
 import { UpdatePriceModule } from './buttonsUpdater/update-price.module';
+import { ApiModule } from './apiService/api.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { UpdatePriceModule } from './buttonsUpdater/update-price.module';
       load: [config],
     }),
     HealthModule,
-    // UpdateModule,
+    ApiModule,
     TelegramModule,
     MongooseModule.forRootAsync({
       inject: [ConfigService],

@@ -2,15 +2,16 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { UserService } from './user/user.service';
 import { OrderService } from './order/order.service';
 import { Message } from 'node-telegram-bot-api';
-import TelegramBot = require('node-telegram-bot-api');
+import * as TelegramBot from 'node-telegram-bot-api';
 import { ConfigService } from '@nestjs/config';
-import { botMainMessage } from '../utils/messages';
 import { MainMessage, mainMessages } from '../utils/telegram.constants';
 import { UpdateMenuService } from '../actionsUpdater/update-menu.service';
 import { UpdatePriceService } from '../buttonsUpdater/update-price.service';
 import { mainActionsButtons, PriceEntries, secondStep, Steps, weekDays } from './telegram.constants';
 import { Order } from '../schemas/order.schema';
 import { addButtonsToKeyboard } from './utils/addButtonsToKeyboard';
+import { sendMessageAndKeyboard } from './utils/sendMessageAndKeyboard';
+import { botMainMessage } from 'src/utils/messages';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -39,32 +40,6 @@ export class TelegramService implements OnModuleInit {
     await this.userService.saveState(userTelegramId, 'start');
     this.bot.sendMessage(userTelegramId, botMainMessage.firstMessage, {
       reply_markup: markup,
-    });
-  }
-
-  async sendMessageAndKeyboard(userTelegramId: number, text: string, buttons: { text: string }[][]) {
-    this.bot.sendMessage(userTelegramId, text, {
-      reply_markup: {
-        keyboard: buttons,
-        one_time_keyboard: true,
-        resize_keyboard: true,
-      },
-    });
-  }
-
-  async sendImageMessageAndKeyboard(
-    userTelegramId: number,
-    text: string,
-    buttons: { text: string }[][],
-    imageLink: string,
-  ) {
-    this.bot.sendPhoto(userTelegramId, imageLink, {
-      caption: text,
-      reply_markup: {
-        keyboard: buttons,
-        one_time_keyboard: true,
-        resize_keyboard: true,
-      },
     });
   }
 
@@ -203,7 +178,7 @@ export class TelegramService implements OnModuleInit {
       food.push(options[nu]);
     });
     const buttons = await addButtonsToKeyboard(['Да', 'Нет'], 2);
-    await this.sendMessageAndKeyboard(chatId, 'Дополнения?', buttons);
+    await sendMessageAndKeyboard(chatId, 'Дополнения?', buttons);
 
     const orderModel = {
       userTelegramId: msg.user.id,
@@ -232,7 +207,11 @@ export class TelegramService implements OnModuleInit {
     const orderDone = await this.userService.getOrderDone(userTelegramId);
     if (orderDone) {
       const buttons = await addButtonsToKeyboard(['В начало'], 1);
-      await this.sendMessageAndKeyboard(userTelegramId, 'Ваш заказ сформирован, если вы хотите сбросить текущий заказ, то воспользуйтесь командой \n/delete_order либо нажмите кнопку В начало', buttons)
+      await sendMessageAndKeyboard(
+        userTelegramId,
+        'Ваш заказ сформирован, если вы хотите сбросить текущий заказ, то воспользуйтесь командой \n/delete_order либо нажмите кнопку В начало',
+        buttons,
+      );
       return 'done';
     }
     if (await this.orderService.get(msg.chat.id)) {
@@ -301,7 +280,7 @@ export class TelegramService implements OnModuleInit {
       await this.sendMainKeyboard(userTelegramId);
       return;
     }
-    await this.sendMessageAndKeyboard(userTelegramId, 'Подтверждаете заказ?', buttons);
+    await sendMessageAndKeyboard(userTelegramId, 'Подтверждаете заказ?', buttons);
     await this.bot.sendMessage(userTelegramId, orders);
   }
 
@@ -350,15 +329,15 @@ export class TelegramService implements OnModuleInit {
         await this.sendMainKeyboard(userTelegramId);
       }
     });
-    this.bot.onText(/\/reset/, async (msg: any) => {
+    this.bot.onText(/\/reset/, async (msg: Message) => {
       const userTelegramId = msg.from.id;
-      const managerId = await this.configService.get('app-config.MANAGER_ID');
-      if (userTelegramId !== managerId) return;
+      const managerId: string = await this.configService.get('app-config.MANAGER_ID');
+      if (userTelegramId !== Number(managerId)) return;
       const result = await this.userService.changeAllStatusOrderDone();
       if (result) {
-        await this.bot.sendMessage(userTelegramId, 'Все статусы сброшены')
+        await this.bot.sendMessage(userTelegramId, 'Все статусы сброшены');
       }
-    })
+    });
     this.bot.onText(/\/delete_order/, async (msg: any) => {
       const userTelegramId = msg.from.id;
       const date = new Date();
@@ -372,7 +351,7 @@ export class TelegramService implements OnModuleInit {
       await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
       const buttons = await addButtonsToKeyboard(['Да, уверен', 'Нет, кажется, это ошибка'], 1);
 
-      await this.sendMessageAndKeyboard(
+      await sendMessageAndKeyboard(
         userTelegramId,
         'Ваш текущий заказ будет удалён.\nВы уверены, что хотите это сделать?',
         buttons,
@@ -403,7 +382,6 @@ export class TelegramService implements OnModuleInit {
     });
 
     this.bot.on('message', async (msg: Message) => {
-
       type SecondStepButtons = {
         [key in Steps]: (msg: Message) => Promise<string>;
       };
@@ -456,20 +434,21 @@ export class TelegramService implements OnModuleInit {
       if (state === 'confirm') {
         if (msg.text == 'Да, конечно') {
           await this.userService.saveOrderDone(userTelegramId, true);
-          await this.bot.sendMessage(userTelegramId, 'А теперь последний шаг\nВведите ваше имя и фамилию (пример: Иван Иванов)');
+          await this.bot.sendMessage(
+            userTelegramId,
+            'А теперь последний шаг\nВведите ваше имя и фамилию (пример: Иван Иванов)',
+          );
           await this.userService.saveState(userTelegramId, 'fullName');
           return;
         } else if (msg.text == 'Нет, начать заново') {
           await this.sendMainKeyboard(userTelegramId);
-          await this.userService.saveState(userTelegramId, 'start');
           return;
         }
       }
-      if(state === 'fullName') {
+      if (state === 'fullName') {
         await this.userService.saveFullName(userTelegramId, msg.text);
         await this.bot.sendMessage(userTelegramId, 'Спасибо,\nВаш заказ создан и отправлен!');
         await this.sendMainKeyboard(userTelegramId);
-        await this.userService.saveState(userTelegramId, 'start');
       }
       if (state === 'deleteOrder') {
         if (msg.text == 'Да, уверен') {
@@ -485,7 +464,6 @@ export class TelegramService implements OnModuleInit {
           );
         }
         await this.sendMainKeyboard(userTelegramId);
-        await this.userService.saveState(userTelegramId, 'start');
         return;
       }
       const date = new Date();
@@ -507,7 +485,7 @@ export class TelegramService implements OnModuleInit {
             Object.keys(secondStepButtons).map((item) => item),
             1,
           );
-          await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
+          await sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
           await this.userService.saveState(userTelegramId, 'orderType');
           return;
         }
@@ -528,7 +506,7 @@ export class TelegramService implements OnModuleInit {
           Object.keys(secondStepButtons).map((item) => item),
           1,
         );
-        await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
+        await sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
         await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
         await this.userService.saveState(userTelegramId, 'orderType');
         return;
@@ -545,9 +523,7 @@ export class TelegramService implements OnModuleInit {
         const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
         await this.userService.saveState(userTelegramId, foundState);
         if (foundState === 'order' || foundState === 'myOrder') return;
-        await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
-      }
-      if (userData.state === 'order') {
+        await sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
       }
     });
   }

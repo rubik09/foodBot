@@ -28,6 +28,9 @@ export class OrderService {
   }
 
   async del(userTelegramId: number, datesToDelete: string[]): Promise<any> {
-    return await this.orderModel.deleteMany({ userTelegramId, date: {$in: datesToDelete} });
+    return await this.orderModel.deleteMany({ userTelegramId, date: { $in: datesToDelete } });
+  }
+  async getByOrderType(orderType: string): Promise<Order[] | null> {
+    return await this.orderModel.find({ orderType });
   }
 }

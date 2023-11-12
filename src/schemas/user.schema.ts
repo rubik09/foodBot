@@ -11,7 +11,7 @@ export class User {
   @Prop()
   username: string;
 
-  @Prop({default: ''})
+  @Prop({ default: '' })
   fullName: string;
 
   @Prop()
@@ -20,7 +20,7 @@ export class User {
   @Prop()
   state: string;
 
-  @Prop({default: 0})
+  @Prop({ default: 0 })
   pollId: number;
 
   @Prop()
