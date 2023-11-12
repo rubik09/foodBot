@@ -7,11 +7,10 @@ import { ConfigService } from '@nestjs/config';
 import { botMainMessage } from '../utils/messages';
 import { MainMessage, mainMessages } from '../utils/telegram.constants';
 import { UpdateMenuService } from '../actionsUpdater/update-menu.service';
-import { UpdateMenuProvider } from '../actionsUpdater/update-menu.provider';
 import { UpdatePriceService } from '../buttonsUpdater/update-price.service';
-import { chownSync, stat } from 'fs';
-import { PriceEntries, weekDays } from './telegram.constants';
-import { Order } from 'src/schemas/order.schema';
+import { mainActionsButtons, PriceEntries, secondStep, Steps, weekDays } from './telegram.constants';
+import { Order } from '../schemas/order.schema';
+import { addButtonsToKeyboard } from './utils/addButtonsToKeyboard';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -203,12 +202,11 @@ export class TelegramService implements OnModuleInit {
     choice.forEach((nu) => {
       food.push(options[nu]);
     });
-    const buttons = await this.addButtonsToKeyboard(['Да', 'Нет'], 2);
+    const buttons = await addButtonsToKeyboard(['Да', 'Нет'], 2);
     await this.sendMessageAndKeyboard(chatId, 'Дополнения?', buttons);
 
     const orderModel = {
       userTelegramId: msg.user.id,
-      fullName: `${msg.user.first_name || ''} ${msg.user.last_name || ''}`,
       salad: { name: '', quantity: 0 },
       soup: { name: '', quantity: 0 },
       hotDish: { name: '', quantity: 0 },
@@ -233,14 +231,13 @@ export class TelegramService implements OnModuleInit {
     const userTelegramId = msg.from.id;
     const orderDone = await this.userService.getOrderDone(userTelegramId);
     if (orderDone) {
-      this.bot.sendMessage(
-        userTelegramId,
-        'Ваш заказ сформирован, если вы хотите сбросить текущий заказ, то воспользуйтесь командой \n/delete_order',
-      );
+      const buttons = await addButtonsToKeyboard(['В начало'], 1);
+      await this.sendMessageAndKeyboard(userTelegramId, 'Ваш заказ сформирован, если вы хотите сбросить текущий заказ, то воспользуйтесь командой \n/delete_order либо нажмите кнопку В начало', buttons)
       return 'done';
     }
     if (await this.orderService.get(msg.chat.id)) {
-      await this.orderService.del(userTelegramId);
+      const nextWeekDates = await this.getNextWeekDates();
+      await this.orderService.del(userTelegramId, nextWeekDates);
     }
     const mmm = await this.bot.sendPoll(userTelegramId, 'Выбери день', weekDays, {
       allows_multiple_answers: true,
@@ -274,7 +271,7 @@ export class TelegramService implements OnModuleInit {
     } as PriceEntries;
   }
 
-  async showPrices() {
+  async showPrices(): Promise<string> {
     const prices: PriceEntries = await this.getPrices();
     const pricesObject = {
       Суп: prices.soup,
@@ -289,29 +286,13 @@ export class TelegramService implements OnModuleInit {
     return priceString;
   }
 
-  async groupBy<T>(items: T[], n: number): Promise<T[][]> {
-    const count = Math.ceil(items.length / n);
-    const groups: T[][] = Array(count);
-    for (let index = 0; index < count; index++) {
-      groups[index] = items.slice(index * n, index * n + n);
-    }
-    return groups;
-  }
-
-  async addButtonsToKeyboard(arr: string[], amountButtonsPerLine: number): Promise<{ text: string }[][]> {
-    const keyboardButtons = await this.groupBy(
-      arr.map((item) => ({ text: item })),
-      amountButtonsPerLine,
-    );
-    return keyboardButtons;
-  }
   async findMessageIndex(arr: MainMessage[], message: string) {
     return arr.findIndex((item) => item.text1 === message);
   }
 
   async confirmation(userTelegramId: number) {
     await this.userService.saveState(userTelegramId, 'confirm');
-    const buttons = await this.addButtonsToKeyboard(['Да, конечно', 'Нет, начать заново'], 1);
+    const buttons = await addButtonsToKeyboard(['Да, конечно', 'Нет, начать заново'], 1);
     const orders = await this.getAllOrders(userTelegramId);
     if (orders === 'Заказ должен быть больше 4500') {
       await this.userService.saveState(userTelegramId, 'start');
@@ -369,6 +350,15 @@ export class TelegramService implements OnModuleInit {
         await this.sendMainKeyboard(userTelegramId);
       }
     });
+    this.bot.onText(/\/reset/, async (msg: any) => {
+      const userTelegramId = msg.from.id;
+      const managerId = await this.configService.get('app-config.MANAGER_ID');
+      if (userTelegramId !== managerId) return;
+      const result = await this.userService.changeAllStatusOrderDone();
+      if (result) {
+        await this.bot.sendMessage(userTelegramId, 'Все статусы сброшены')
+      }
+    })
     this.bot.onText(/\/delete_order/, async (msg: any) => {
       const userTelegramId = msg.from.id;
       const date = new Date();
@@ -380,7 +370,7 @@ export class TelegramService implements OnModuleInit {
       }
       const orders = await this.getAllOrders(userTelegramId);
       await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
-      const buttons = await this.addButtonsToKeyboard(['Да, уверен', 'Нет, кажется, это ошибка'], 1);
+      const buttons = await addButtonsToKeyboard(['Да, уверен', 'Нет, кажется, это ошибка'], 1);
 
       await this.sendMessageAndKeyboard(
         userTelegramId,
@@ -413,12 +403,6 @@ export class TelegramService implements OnModuleInit {
     });
 
     this.bot.on('message', async (msg: Message) => {
-      const enum Steps {
-        menu = 'Посмотреть меню',
-        prices = 'Наши цены',
-        order = 'Cделать заказ',
-        myOrder = 'Мой заказ',
-      }
 
       type SecondStepButtons = {
         [key in Steps]: (msg: Message) => Promise<string>;
@@ -431,58 +415,19 @@ export class TelegramService implements OnModuleInit {
         [Steps.myOrder]: this.myOrder.bind(this),
       };
 
-      type SecondStep = {
-        menu: {
-          text: string;
-          state: string;
-        };
-        price: {
-          text: string;
-          state: string;
-        };
-        order: {
-          text: string;
-          state: string;
-        };
-        myOrder: {
-          text: string;
-          state: string;
-        };
-      };
       const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
 
+      const userData = await this.userService.getUser(userTelegramId);
+      if (!userData) return;
       const pollId = await this.userService.getPollId(userTelegramId);
-      if (pollId) {
+      if (pollId > 0) {
         await this.bot.stopPoll(userTelegramId, pollId);
         await this.userService.updatePollId(userTelegramId);
 
         await this.sendMainKeyboard(userTelegramId);
         await this.userService.saveState(userTelegramId, 'start');
       }
-
-      const secondStep: SecondStep = {
-        menu: {
-          text: 'Посмотреть меню',
-          state: 'menu',
-        },
-        price: {
-          text: 'Наши цены',
-          state: 'prices',
-        },
-        order: {
-          text: 'Cделать заказ',
-          state: 'order',
-        },
-        myOrder: {
-          text: 'Мой заказ',
-          state: 'myOrder',
-        },
-      };
-      const mainActionsButtons = ['Назад', 'В начало'];
-
-      const userData = await this.userService.getUser(userTelegramId);
-      if (!userData) return;
       const nums = ['0', '1', '2', '3', '4'];
       const state: string = await this.userService.getState(userTelegramId);
       if (nums.includes(state)) {
@@ -511,20 +456,27 @@ export class TelegramService implements OnModuleInit {
       if (state === 'confirm') {
         if (msg.text == 'Да, конечно') {
           await this.userService.saveOrderDone(userTelegramId, true);
-          await this.bot.sendMessage(userTelegramId, 'Спасибо,\nВаш заказ потвержден!');
-          await this.sendMainKeyboard(userTelegramId);
-          await this.userService.saveState(userTelegramId, 'start');
+          await this.bot.sendMessage(userTelegramId, 'А теперь последний шаг\nВведите ваше имя и фамилию (пример: Иван Иванов)');
+          await this.userService.saveState(userTelegramId, 'fullName');
+          return;
         } else if (msg.text == 'Нет, начать заново') {
           await this.sendMainKeyboard(userTelegramId);
           await this.userService.saveState(userTelegramId, 'start');
           return;
         }
       }
+      if(state === 'fullName') {
+        await this.userService.saveFullName(userTelegramId, msg.text);
+        await this.bot.sendMessage(userTelegramId, 'Спасибо,\nВаш заказ создан и отправлен!');
+        await this.sendMainKeyboard(userTelegramId);
+        await this.userService.saveState(userTelegramId, 'start');
+      }
       if (state === 'deleteOrder') {
         if (msg.text == 'Да, уверен') {
           await this.userService.saveOrderDone(userTelegramId, true);
           if (await this.orderService.get(userTelegramId)) {
-            await this.orderService.del(userTelegramId);
+            const nextWeekDates = await this.getNextWeekDates();
+            await this.orderService.del(userTelegramId, nextWeekDates);
           }
           await this.userService.saveOrderDone(userTelegramId, false);
           await this.bot.sendMessage(
@@ -551,7 +503,7 @@ export class TelegramService implements OnModuleInit {
             await this.sendMainKeyboard(userTelegramId);
             return;
           }
-          const buttons = await this.addButtonsToKeyboard(
+          const buttons = await addButtonsToKeyboard(
             Object.keys(secondStepButtons).map((item) => item),
             1,
           );
@@ -572,7 +524,7 @@ export class TelegramService implements OnModuleInit {
           await this.sendMainKeyboard(userTelegramId);
           return;
         }
-        const buttons = await this.addButtonsToKeyboard(
+        const buttons = await addButtonsToKeyboard(
           Object.keys(secondStepButtons).map((item) => item),
           1,
         );
@@ -589,7 +541,7 @@ export class TelegramService implements OnModuleInit {
           return;
         }
         const messageSecondStep = await secondStepButtons[findMessageIndex as Steps](msg);
-        const buttons = await this.addButtonsToKeyboard(mainActionsButtons, 2);
+        const buttons = await addButtonsToKeyboard(mainActionsButtons, 2);
         const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
         await this.userService.saveState(userTelegramId, foundState);
         if (foundState === 'order' || foundState === 'myOrder') return;

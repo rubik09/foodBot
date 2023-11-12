@@ -11,13 +11,16 @@ export class User {
   @Prop()
   username: string;
 
+  @Prop({default: ''})
+  fullName: string;
+
   @Prop()
   orderType: string;
 
   @Prop()
   state: string;
 
-  @Prop()
+  @Prop({default: 0})
   pollId: number;
 
   @Prop()

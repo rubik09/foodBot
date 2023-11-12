@@ -20,6 +20,9 @@ export class UserService {
   async saveOrderType(userTelegramId: number, orderType: string): Promise<User> {
     return this.userProvider.saveOrderType(userTelegramId, orderType);
   }
+  async saveFullName(userTelegramId: number, fullName: string): Promise<User> {
+    return this.userProvider.saveFullName(userTelegramId, fullName);
+  }
   async savePollId(userTelegramId: number, pollId: number): Promise<User> {
     return this.userProvider.savePollId(userTelegramId, pollId);
   }
@@ -48,8 +51,7 @@ export class UserService {
   async getPollId(userTelegramId: number): Promise<number> {
     return await this.userProvider.getPollId(userTelegramId);
   }
-
-  // async saveLanguage(userTelegramId: number, language: string, state: string = ''): Promise<User> {
-  //   return this.userProvider.saveLanguage(userTelegramId, language, state);
-  // }
+  async changeAllStatusOrderDone(): Promise<boolean> {
+    return this.userProvider.changeAllStatusOrderDone();
+  }
 }

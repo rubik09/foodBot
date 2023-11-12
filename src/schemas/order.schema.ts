@@ -21,9 +21,6 @@ export class Order {
   userTelegramId: number;
 
   @Prop()
-  fullName: string;
-
-  @Prop()
   salad: Salad;
 
   @Prop()
