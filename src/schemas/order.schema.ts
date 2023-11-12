@@ -3,29 +3,19 @@ import { HydratedDocument } from 'mongoose';
 
 export type OrderDocument = HydratedDocument<Order>;
 
-@Schema({ collection: `orders` })
-
 class Salad {
-  @Prop()
   name: string;
-
-  @Prop()
   quantity: number;
 }
 class Soup {
-  @Prop()
   name: string;
-
-  @Prop()
   quantity: number;
 }
 class HotDish {
-  @Prop()
   name: string;
-
-  @Prop()
   quantity: number;
 }
+@Schema({ collection: `orders` })
 export class Order {
   @Prop({ required: true })
   userTelegramId: number;
@@ -45,15 +35,14 @@ export class Order {
   @Prop()
   extra: string;
 
-  @Prop()
+  @Prop({ required: true })
   orderType: string;
 
-  @Prop()
-  date: string
+  @Prop({ required: true })
+  date: string;
 
   @Prop()
-  price: number
-
+  price: number;
 }
 
 export const Orderchema = SchemaFactory.createForClass(Order);

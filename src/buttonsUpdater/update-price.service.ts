@@ -3,6 +3,7 @@ import load from './parser';
 import { googleApiService } from '../utils/googleApi/api';
 import { httpResponceMessages } from '../utils/messages';
 import { UpdatePriceProvider } from './update-price.provider';
+import { Price } from 'src/schemas/price.schema';
 
 @Injectable()
 export class UpdatePriceService implements OnModuleInit {
@@ -17,7 +18,7 @@ export class UpdatePriceService implements OnModuleInit {
     await this.updatePriceProvider.uploadPrice(res);
     return JSON.stringify({ message: httpResponceMessages.success });
   }
-  async getPrices () {
+  async getPrices() {
     const result = await this.updatePriceProvider.getPrices();
     return result;
   }

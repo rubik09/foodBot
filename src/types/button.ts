@@ -1,7 +1,7 @@
 type Button = {
   button: string;
   text: string;
-  imageLink:string;
+  imageLink: string;
   path: string;
   language: string;
 };

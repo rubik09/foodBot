@@ -16,7 +16,7 @@ export class UpdateMenuService implements OnModuleInit {
     await this.updateMenuProvider.uploadMenu(res);
     return JSON.stringify({ message: httpResponceMessages.success });
   }
-  async getMenu () {
+  async getMenu() {
     const result = await this.updateMenuProvider.getMenuPosition();
     return result;
   }

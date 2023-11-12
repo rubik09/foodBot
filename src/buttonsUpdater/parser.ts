@@ -9,9 +9,9 @@ const arrToActions = (arr: string[][]): Price[] => {
 };
 function getPrices(menuData: string[][]): Price {
   return {
-    soupPrice: Number(menuData[0][1]!== undefined ? menuData[0][1] : ''),
-    saladPrice: Number(menuData[1][1] !== undefined ? menuData[1][1] : ''),
-    hotDishPrice: Number(menuData[2][1] !== undefined ? menuData[2][1] : ''),
+    soupPrice: Number(menuData[0][1] !== undefined ? menuData[0][1] : ''),
+    hotDishPrice: Number(menuData[2][1] !== undefined ? menuData[1][1] : ''),
+    saladPrice: Number(menuData[1][1] !== undefined ? menuData[2][1] : ''),
   };
 }
 

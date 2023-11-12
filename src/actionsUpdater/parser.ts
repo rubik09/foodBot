@@ -4,9 +4,9 @@ import Menu from '../types/menu';
 
 const arrToActions = (arr: string[][], headerArr: string[]): Menu[] => {
   const res: Menu[] = [];
-  const arrA: string[][] = []
+  const arrA: string[][] = [];
   arr.forEach((row) => {
-    arrA.push(row)
+    arrA.push(row);
   });
   for (let i = 1; i < headerArr.length; i++) {
     const menuForDay = getMenuForDay(i, arrA, headerArr[i]);

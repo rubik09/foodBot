@@ -6,11 +6,7 @@ import { User } from '../../schemas/user.schema';
 @Injectable()
 export class UserProvider {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
-  async createUser(
-    userTelegramId: number,
-    username: string,
-    state: string = 'start',
-  ): Promise<User> {
+  async createUser(userTelegramId: number, username: string, state = 'start'): Promise<User> {
     return await this.userModel.create({ userTelegramId, username, state });
   }
 
@@ -39,12 +35,12 @@ export class UserProvider {
   }
 
   async updatePollId(userTelegramId: number): Promise<User> {
-    const filter = {userTelegramId};
-    const update = {pollId: 0};
+    const filter = { userTelegramId };
+    const update = { pollId: 0 };
     return await this.userModel.findOneAndUpdate(filter, update);
   }
 
-  async saveOrderDays(userTelegramId: number, orderDays: string []): Promise<User> {
+  async saveOrderDays(userTelegramId: number, orderDays: string[]): Promise<User> {
     let user = await this.userModel.findOne({ userTelegramId });
     if (!user) {
       user = new this.userModel({ userTelegramId, orderDays });
@@ -53,7 +49,9 @@ export class UserProvider {
     }
     return await user.save();
   }
-
+  async getOrderDays(userTelegramId: number): Promise<string[]> {
+    return (await this.userModel.findOne({ userTelegramId })).orderDays;
+  }
   async saveOrderType(userTelegramId: number, orderType: string): Promise<User> {
     let user = await this.userModel.findOne({ userTelegramId });
     if (!user) {
@@ -74,11 +72,14 @@ export class UserProvider {
     return await user.save();
   }
 
-  async getOrderType (userTelegramId: number): Promise<string> {
+  async getOrderType(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).orderType;
   }
   async getState(userTelegramId: number): Promise<string> {
     return (await this.userModel.findOne({ userTelegramId })).state;
+  }
+  async getOrderDone(userTelegramId: number): Promise<boolean> {
+    return (await this.userModel.findOne({ userTelegramId })).orderDone;
   }
 
   async getPollId(userTelegramId: number): Promise<number> {

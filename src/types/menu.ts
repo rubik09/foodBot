@@ -10,7 +10,6 @@ type Menu = {
   hotDish3: string;
 
   salad: string;
-
 };
 
 export default Menu;
