@@ -3,6 +3,7 @@ import { httpResponceMessages } from '../utils/messages';
 import load from './parser';
 import { UpdateMenuProvider } from './update-menu.provider';
 import { googleApiService } from 'src/utils/googleApi/api';
+import { Menu } from '../schemas/menu.schema';
 
 @Injectable()
 export class UpdateMenuService implements OnModuleInit {
@@ -16,10 +17,11 @@ export class UpdateMenuService implements OnModuleInit {
     await this.updateMenuProvider.uploadMenu(res);
     return JSON.stringify({ message: httpResponceMessages.success });
   }
-  async getMenu() {
-    const result = await this.updateMenuProvider.getMenuPosition();
-    return result;
+
+  async getMenu(): Promise<Menu[]> {
+    return await this.updateMenuProvider.getMenuPosition();
   }
+
   async onModuleInit() {
     try {
       await googleApiService.init();

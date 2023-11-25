@@ -23,9 +23,15 @@ export class OrderService {
     const update = { extra: extra };
     return await this.orderModel.findOneAndUpdate(filter, update);
   }
+
   async get(userTelegramId: number): Promise<Order[] | null> {
     return await this.orderModel.find({ userTelegramId });
   }
+
+  async getNextWeek(userTelegramId: number, dates: string[]): Promise<Order[] | null> {
+    return await this.orderModel.find({ userTelegramId, date: { $in: dates } });
+  }
+
   async getByDate(today: string): Promise<Order[] | null> {
     return await this.orderModel
       .find({
@@ -39,5 +45,30 @@ export class OrderService {
   }
   async getByOrderType(orderType: string): Promise<Order[] | null> {
     return await this.orderModel.find({ orderType });
+  }
+
+  async createDailyMenuPoll(order: any) {
+    const options = [];
+    if (order.salad) {
+      options.push(order.salad);
+      options.push(`${order.salad} x2`);
+    }
+    if (order.soup) {
+      options.push(order.soup);
+      options.push(`${order.soup} x2`);
+    }
+    if (order.hotDish1) {
+      options.push(order.hotDish1);
+      options.push(`${order.hotDish1} x2`);
+    }
+    if (order.hotDish2) {
+      options.push(order.hotDish2);
+      options.push(`${order.hotDish2} x2`);
+    }
+    if (order.hotDish3) {
+      options.push(order.hotDish3);
+      options.push(`${order.hotDish3} x2`);
+    }
+    return options;
   }
 }

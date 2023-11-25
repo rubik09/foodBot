@@ -6,13 +6,12 @@ import { logger } from '@1win/cdp-backend-tools';
 import config from './configuration/config';
 import { GlobalExceptionFilter } from './filter';
 import { HealthModule } from './health/health.module';
-// import { UpdateModule } from './buttonsUpdater/update.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { UserModule } from './telegram/user/user.module';
 import { OrderModule } from './telegram/order/order.module';
-import { UpdateMenuModule } from './actionsUpdater/update-menu.module';
+import { UpdateMenuModule } from './menu-updater/update-menu.module';
 import { ConfigService } from '@nestjs/config';
-import { UpdatePriceModule } from './buttonsUpdater/update-price.module';
+import { UpdatePriceModule } from './price-updater/update-price.module';
 import { ApiModule } from './apiService/api.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -36,8 +35,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     UpdateMenuModule,
     UpdatePriceModule,
     ScheduleModule.forRoot(),
-
-    // UpdateActionsModule,
   ],
   providers: [
     {

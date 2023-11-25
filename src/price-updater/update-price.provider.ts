@@ -12,7 +12,7 @@ export class UpdatePriceProvider {
   async uploadPrice(price: Price[]) {
     await this.priceModel.insertMany(price);
   }
-  async getPrices() {
+  async getPrices(): Promise<Price[]> {
     return await this.priceModel.find();
   }
 }

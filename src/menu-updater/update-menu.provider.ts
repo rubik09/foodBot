@@ -9,12 +9,15 @@ export class UpdateMenuProvider {
   async removeAllMenu() {
     await this.menuModel.deleteMany();
   }
+
   async uploadMenu(menu: Menu[]) {
     await this.menuModel.insertMany(menu);
   }
-  async getMenuPosition() {
+
+  async getMenuPosition(): Promise<Menu[]> {
     return await this.menuModel.find();
   }
+
   async getMenuPosition1() {
     return await this.menuModel.findOne({ weekDay: 'Понеделик' });
   }

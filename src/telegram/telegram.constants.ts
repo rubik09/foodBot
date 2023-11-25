@@ -49,3 +49,12 @@ export const secondStep: SecondStep = {
     state: 'myOrder',
   },
 };
+
+export const offficesKeyboard = [
+  [{ text: 'Офис (Пека дапчевича)' }],
+  [{ text: 'Доставка (минимальный заказ 4500)' }],
+  [{ text: 'Елизмо' }],
+  [{ text: 'Альфалидс' }],
+];
+
+export const weekDaysNumbers = ['0', '1', '2', '3', '4'];

@@ -4,6 +4,7 @@ import { googleApiService } from '../utils/googleApi/api';
 import { httpResponceMessages } from '../utils/messages';
 import { UpdatePriceProvider } from './update-price.provider';
 import { Price } from 'src/schemas/price.schema';
+import { PriceEntries } from '../telegram/telegram.constants';
 
 @Injectable()
 export class UpdatePriceService implements OnModuleInit {
@@ -18,10 +19,22 @@ export class UpdatePriceService implements OnModuleInit {
     await this.updatePriceProvider.uploadPrice(res);
     return JSON.stringify({ message: httpResponceMessages.success });
   }
-  async getPrices() {
+  async getPrices(): Promise<Price[]> {
     const result = await this.updatePriceProvider.getPrices();
     return result;
   }
+
+  async getPricesEntries(): Promise<PriceEntries> {
+    const prices: Price[] = await this.getPrices();
+
+    const priceEntries = Object.entries(prices)[0][1];
+    return {
+      soup: priceEntries.soupPrice,
+      hotDish: priceEntries.hotDishPrice,
+      salad: priceEntries.saladPrice,
+    } as PriceEntries;
+  }
+
   async onModuleInit() {
     try {
       await googleApiService.init();

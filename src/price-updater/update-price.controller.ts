@@ -1,4 +1,4 @@
-import { Controller, Get, HttpException, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Controller, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { UpdatePriceService } from './update-price.service';
 @Controller('update-price')
@@ -11,4 +11,3 @@ export class UpdatePriceController {
     });
   }
 }
-//

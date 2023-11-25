@@ -5,14 +5,25 @@ import { Message } from 'node-telegram-bot-api';
 import * as TelegramBot from 'node-telegram-bot-api';
 import { ConfigService } from '@nestjs/config';
 import { MainMessage, mainMessages } from '../utils/telegram.constants';
-import { UpdateMenuService } from '../actionsUpdater/update-menu.service';
-import { UpdatePriceService } from '../buttonsUpdater/update-price.service';
-import { mainActionsButtons, PriceEntries, secondStep, Steps, weekDays } from './telegram.constants';
-import { Order } from '../schemas/order.schema';
+import { UpdateMenuService } from '../menu-updater/update-menu.service';
+import { UpdatePriceService } from '../price-updater/update-price.service';
+import {
+  mainActionsButtons,
+  weekDaysNumbers,
+  offficesKeyboard,
+  PriceEntries,
+  secondStep,
+  Steps,
+  weekDays,
+} from './telegram.constants';
 import { addButtonsToKeyboard } from './utils/addButtonsToKeyboard';
-import { sendMessageAndKeyboard } from './utils/sendMessageAndKeyboard';
 import { botMainMessage } from 'src/utils/messages';
 import { Cron } from '@nestjs/schedule';
+import { createDailyMenuPoll, formatOrders, parseOrder } from './utils/ordersParsing';
+import { formatMenu, printMenuForDay } from './utils/menuParsing';
+import { getNextWeekDates } from './utils/getWeekDays';
+import { parsePrices } from './utils/priceParsing';
+import { Order } from 'src/schemas/order.schema';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -38,7 +49,7 @@ export class TelegramService implements OnModuleInit {
       for (const order of ordersToday) {
         const orderDone = await this.userService.getOrderDone(order.userTelegramId);
         if (orderDone) {
-          const parsedOrder = await this.parseOrder(order);
+          const parsedOrder = await parseOrder(order);
           const message = `Ваш заказ на сегодня:\n${parsedOrder}`;
           await this.bot.sendMessage(order.userTelegramId, message);
           counter += 1;
@@ -51,14 +62,19 @@ export class TelegramService implements OnModuleInit {
     this.logger.log(`Рассылка отправлена. Количество: ${counter}`);
   }
 
+  async sendMessageAndKeyboard(userTelegramId: number, text: string, buttons: { text: string }[][]) {
+    this.bot.sendMessage(userTelegramId, text, {
+      reply_markup: {
+        keyboard: buttons,
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
+    });
+  }
+
   async sendMainKeyboard(userTelegramId: number) {
     const markup: TelegramBot.ReplyKeyboardMarkup = {
-      keyboard: [
-        [{ text: 'Офис (Пека дапчевича)' }],
-        [{ text: 'Доставка (минимальный заказ 4500)' }],
-        [{ text: 'Елизмо' }],
-        [{ text: 'Альфалидс' }],
-      ],
+      keyboard: offficesKeyboard,
       one_time_keyboard: true,
       resize_keyboard: true,
     };
@@ -66,85 +82,20 @@ export class TelegramService implements OnModuleInit {
     this.bot.sendMessage(userTelegramId, botMainMessage.firstMessage, {
       reply_markup: markup,
     });
-  }
 
-  async formatMenu(menuData: any[]) {
-    const mapa = {
-      weekDay: 'День недели',
-      soup: 'Суп',
-      hotDish1: 'Горячее 1',
-      hotDish2: 'Горячее 2',
-      hotDish3: 'Горячее 3',
-      salad: 'Салат',
-    };
-    const formattedMenu = menuData.map((item) => ({
-      [mapa.weekDay]: item['weekDay'],
-      [mapa.soup]: item['soup'],
-      [mapa.hotDish1]: item['hotDish1'],
-      [mapa.hotDish2]: item['hotDish2'],
-      [mapa.hotDish3]: item['hotDish3'],
-      [mapa.salad]: item['salad'],
-    }));
-
-    return formattedMenu;
-  }
-
-  async printMenuForDay(dayMenu: any) {
-    const result = [];
-    for (const day of dayMenu) {
-      const formattedDay = Object.entries(day)
-        .map(([key, value]) => {
-          if (value !== '') {
-            return `${key}: ${value}`;
-          }
-          return '';
-        })
-        .filter(Boolean)
-        .join('\n');
-      result.push(formattedDay);
-    }
-    return result.join('\n\n');
-  }
-  async getMenuArray() {
-    const menuDb = await this.updateMenuService.getMenu();
-    const menuAr: any[] = [];
-    Object.values(menuDb).map((item) => menuAr.push(item));
-    return menuAr;
+    const st = await this.userService.getState(userTelegramId);
+    console.log(st, userTelegramId, 'asfasfasf');
   }
 
   async showMenu() {
-    const menuAr = await this.getMenuArray();
-    const formattedMenu = await this.formatMenu(menuAr);
-    const newMenu = await this.printMenuForDay(formattedMenu);
+    const menuItems = await this.updateMenuService.getMenu();
+    const formattedMenu = await formatMenu(menuItems);
+    const newMenu = await printMenuForDay(formattedMenu);
     return newMenu;
   }
 
-  async createDailyMenuPoll(order: any) {
-    const options = [];
-    if (order.salad) {
-      options.push(order.salad);
-      options.push(`${order.salad} x2`);
-    }
-    if (order.soup) {
-      options.push(order.soup);
-      options.push(`${order.soup} x2`);
-    }
-    if (order.hotDish1) {
-      options.push(order.hotDish1);
-      options.push(`${order.hotDish1} x2`);
-    }
-    if (order.hotDish2) {
-      options.push(order.hotDish2);
-      options.push(`${order.hotDish2} x2`);
-    }
-    if (order.hotDish3) {
-      options.push(order.hotDish3);
-      options.push(`${order.hotDish3} x2`);
-    }
-    return options;
-  }
   async sendDailyMenuPoll(chatId: number, order: any) {
-    const options = await this.createDailyMenuPoll(order);
+    const options = await createDailyMenuPoll(order);
     const mmm = await this.bot.sendPoll(chatId, order.weekDay, options, {
       allows_multiple_answers: true,
       is_anonymous: false,
@@ -153,26 +104,14 @@ export class TelegramService implements OnModuleInit {
     this.userService.savePollId(chatId, mmm.message_id);
   }
 
-  async getNextWeekDates() {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-
-    const startDayOfWeek = dayOfWeek === 6 || dayOfWeek === 5 ? 1 : dayOfWeek + 1;
-    today.setDate(today.getDate() + ((startDayOfWeek - dayOfWeek + 7) % 7));
-
-    const nextWeekDates = [];
-
-    for (let i = 0; i < 5; i++) {
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + i);
-      nextWeekDates.push(nextDate.toISOString().split('T')[0]);
-    }
-    return nextWeekDates;
+  async showPrices(): Promise<string> {
+    const prices: PriceEntries = await this.updatePricesService.getPricesEntries();
+    return parsePrices(prices);
   }
 
   async processOrderResponse(response: string[], menu: any, orderModel: any) {
     const order = { ...orderModel };
-    const prices: PriceEntries = await this.getPrices();
+    const prices: PriceEntries = await this.updatePricesService.getPricesEntries();
     ['soup', 'hotDish1', 'hotDish2', 'hotDish3', 'salad'].forEach((category) => {
       const dishName = menu[category];
       const dishIndex = response.findIndex((option) => option.startsWith(dishName));
@@ -194,18 +133,18 @@ export class TelegramService implements OnModuleInit {
   async saveChoice(chatId: number, msg: TelegramBot.PollAnswer) {
     const choice = msg.option_ids;
 
-    const nextWeekDates = await this.getNextWeekDates();
-    const orders = await this.getMenuArray();
+    const nextWeekDates = await getNextWeekDates();
+    const orders = await this.updateMenuService.getMenu();
     const state = await this.userService.getState(msg.user.id);
-    const options = await this.createDailyMenuPoll(orders[Number(state)]);
+    const options = await createDailyMenuPoll(orders[Number(state)]);
     const food: string[] = [];
-    choice.forEach((nu) => {
-      food.push(options[nu]);
+    choice.forEach((day) => {
+      food.push(options[day]);
     });
     const buttons = await addButtonsToKeyboard(['Да', 'Нет'], 2);
-    await sendMessageAndKeyboard(chatId, 'Дополнения?', buttons);
+    await this.sendMessageAndKeyboard(chatId, 'Дополнения?', buttons);
 
-    const orderModel = {
+    const orderModel: Order = {
       userTelegramId: msg.user.id,
       salad: { name: '', quantity: 0 },
       soup: { name: '', quantity: 0 },
@@ -222,7 +161,7 @@ export class TelegramService implements OnModuleInit {
   }
 
   async makeAllWeekPolls(chatId: number, day: number) {
-    const orders = await this.getMenuArray();
+    const orders = await this.updateMenuService.getMenu();
     await this.userService.saveState(chatId, `${day}`);
     await this.sendDailyMenuPoll(chatId, orders[day]);
   }
@@ -232,7 +171,7 @@ export class TelegramService implements OnModuleInit {
     const orderDone = await this.userService.getOrderDone(userTelegramId);
     if (orderDone) {
       const buttons = await addButtonsToKeyboard(['В начало'], 1);
-      await sendMessageAndKeyboard(
+      await this.sendMessageAndKeyboard(
         userTelegramId,
         'Ваш заказ сформирован, если вы хотите сбросить текущий заказ, то воспользуйтесь командой \n/delete_order либо нажмите кнопку В начало',
         buttons,
@@ -240,7 +179,7 @@ export class TelegramService implements OnModuleInit {
       return 'done';
     }
     if (await this.orderService.get(msg.chat.id)) {
-      const nextWeekDates = await this.getNextWeekDates();
+      const nextWeekDates = await getNextWeekDates();
       await this.orderService.del(userTelegramId, nextWeekDates);
     }
     const mmm = await this.bot.sendPoll(userTelegramId, 'Выбери день', weekDays, {
@@ -250,44 +189,25 @@ export class TelegramService implements OnModuleInit {
     this.userService.savePollId(msg.from.id, mmm.message_id);
     return;
   }
+
   async myOrder(msg: Message) {
     const userTelegramId = msg.from.id;
     const isOrder = await this.userService.getOrderDone(userTelegramId);
     if (isOrder) {
       const orders = await this.getAllOrders(userTelegramId);
-      await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
+      if (orders) {
+        await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
+      } else {
+        await this.bot.sendMessage(userTelegramId, `У вас еще нет текущего заказа`);
+      }
     } else {
       await this.bot.sendMessage(userTelegramId, `У вас еще нет подтвержденного заказа`);
     }
-    await this.userService.saveState(userTelegramId, 'start');
     await this.sendMainKeyboard(userTelegramId);
 
+    const st = await this.userService.getState(userTelegramId);
+    console.log(st, userTelegramId, '2222');
     return 'Возвращаемся в главное меню';
-  }
-  async getPrices() {
-    const prices: Record<string, any> = await this.updatePricesService.getPrices();
-
-    const priceEntries = Object.entries(prices)[0][1];
-    return {
-      soup: priceEntries.soupPrice,
-      hotDish: priceEntries.hotDishPrice,
-      salad: priceEntries.saladPrice,
-    } as PriceEntries;
-  }
-
-  async showPrices(): Promise<string> {
-    const prices: PriceEntries = await this.getPrices();
-    const pricesObject = {
-      Суп: prices.soup,
-      Горячее: prices.hotDish,
-      Салат: prices.salad,
-    };
-
-    const priceString = Object.entries(pricesObject)
-      .map(([category, price]) => `${category}: ${price}`)
-      .join('\n');
-
-    return priceString;
   }
 
   async findMessageIndex(arr: MainMessage[], message: string) {
@@ -305,52 +225,21 @@ export class TelegramService implements OnModuleInit {
       await this.sendMainKeyboard(userTelegramId);
       return;
     }
-    await sendMessageAndKeyboard(userTelegramId, 'Подтверждаете заказ?', buttons);
+    await this.sendMessageAndKeyboard(userTelegramId, 'Подтверждаете заказ?', buttons);
     await this.bot.sendMessage(userTelegramId, orders);
-  }
-  async parseOrder(order: Order, enableePrice = true) {
-    let result = '';
-    result += `\nДата: ${order.date}\n`;
-    if (order.salad.name) {
-      result += `${order.salad.name}: ${order.salad.quantity}\n`;
-    }
-    if (order.soup.name) {
-      result += `${order.soup.name}: ${order.soup.quantity}\n`;
-    }
-    if (order.hotDish.name) {
-      result += `${order.hotDish.name}: ${order.hotDish.quantity}\n`;
-    }
-    result += `Дополнение: ${order.extra || '-'}\n`;
-    if (enableePrice) {
-      result += `Цена: ${order.price}\n\n`;
-    }
-    return result;
-  }
-
-  async formatOrders(orders: Order[]): Promise<string> {
-    let result = '';
-    result += `Место: ${orders[0].orderType}\n`;
-
-    orders.forEach(async (order) => {
-      result += await this.parseOrder(order);
-    });
-
-    const totalCost = orders.reduce((acc, order) => acc + order.price, 0);
-    result += `Общая стоимость заказа: ${totalCost}`;
-    if (orders[0].orderType === 'Доставка' && totalCost < 4500) {
-      return 'Заказ должен быть больше 4500';
-    }
-    return result;
   }
 
   async getAllOrders(userTelegramId: number): Promise<string> {
-    const orders = await this.orderService.get(userTelegramId);
+    const nextWeekDates = await getNextWeekDates();
+    console.log(nextWeekDates);
+    const orders = await this.orderService.getNextWeek(userTelegramId, nextWeekDates);
+    console.log(orders, 'dsfdfsdfsfsfs');
     if (!orders[0]) return '';
-    return await this.formatOrders(orders);
+    return await formatOrders(orders);
   }
 
   async handleUpdates(): Promise<void> {
-    this.bot.onText(/\/start/, async (msg: any) => {
+    this.bot.onText(/\/start/, async (msg: TelegramBot.Message) => {
       const userTelegramId = msg.from.id;
       const user = await this.userService.getUser(userTelegramId);
       if (!user) {
@@ -361,6 +250,7 @@ export class TelegramService implements OnModuleInit {
         await this.sendMainKeyboard(userTelegramId);
       }
     });
+
     this.bot.onText(/\/reset/, async (msg: Message) => {
       const userTelegramId = msg.from.id;
       const managerId: string = await this.configService.get('app-config.MANAGER_ID');
@@ -370,25 +260,31 @@ export class TelegramService implements OnModuleInit {
         await this.bot.sendMessage(userTelegramId, 'Все статусы сброшены');
       }
     });
-    this.bot.onText(/\/delete_order/, async (msg: any) => {
+
+    this.bot.onText(/\/delete_order/, async (msg: TelegramBot.Message) => {
       const userTelegramId = msg.from.id;
       const date = new Date();
-      const zzz = date.getDay();
-      if (zzz === 1) {
+      const todayDay = date.getDay();
+      if (todayDay !== 5 && todayDay !== 6) {
         await this.bot.sendMessage(userTelegramId, 'Заказы можно удалять пятница, суббота');
         await this.sendMainKeyboard(userTelegramId);
         return;
       }
       const orders = await this.getAllOrders(userTelegramId);
+      if (!orders) {
+        await this.sendMainKeyboard(userTelegramId);
+        return await this.bot.sendMessage(userTelegramId, 'У вас нет текущего заказа');
+      }
       await this.bot.sendMessage(userTelegramId, `Ваш текущий заказ:\n${orders}`);
       const buttons = await addButtonsToKeyboard(['Да, уверен', 'Нет, кажется, это ошибка'], 1);
 
-      await sendMessageAndKeyboard(
+      await this.sendMessageAndKeyboard(
         userTelegramId,
         'Ваш текущий заказ будет удалён.\nВы уверены, что хотите это сделать?',
         buttons,
       );
       await this.userService.saveState(userTelegramId, 'deleteOrder');
+      return;
     });
 
     this.bot.on('poll_answer', async (msg: TelegramBot.PollAnswer) => {
@@ -398,9 +294,8 @@ export class TelegramService implements OnModuleInit {
       await this.bot.stopPoll(userTelegramId, pollId);
       await this.userService.updatePollId(userTelegramId);
 
-      const nums = ['0', '1', '2', '3', '4'];
       const state = await this.userService.getState(userTelegramId);
-      if (nums.includes(state)) {
+      if (weekDaysNumbers.includes(state)) {
         this.saveChoice(userTelegramId, msg);
         return;
       }
@@ -428,6 +323,8 @@ export class TelegramService implements OnModuleInit {
       const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
 
+      const st = await this.userService.getState(userTelegramId);
+      console.log(st, userTelegramId, '3333');
       const userData = await this.userService.getUser(userTelegramId);
       if (!userData) return;
       const pollId = await this.userService.getPollId(userTelegramId);
@@ -438,9 +335,9 @@ export class TelegramService implements OnModuleInit {
         await this.sendMainKeyboard(userTelegramId);
         await this.userService.saveState(userTelegramId, 'start');
       }
-      const nums = ['0', '1', '2', '3', '4'];
       const state: string = await this.userService.getState(userTelegramId);
-      if (nums.includes(state)) {
+
+      if (weekDaysNumbers.includes(state)) {
         const orderDays: string[] = await this.userService.getOrderDays(userTelegramId);
         const indexDay = orderDays.indexOf(state);
         if (msg.text == 'Да') {
@@ -452,7 +349,7 @@ export class TelegramService implements OnModuleInit {
             await this.confirmation(userTelegramId);
           }
         } else {
-          const nextWeekDates = await this.getNextWeekDates();
+          const nextWeekDates = await getNextWeekDates();
           await this.orderService.updateOrder(userTelegramId, nextWeekDates[Number(state)], message);
           if (indexDay + 1 < orderDays.length) {
             this.makeAllWeekPolls(userTelegramId, Number(orderDays[indexDay + 1]));
@@ -485,22 +382,26 @@ export class TelegramService implements OnModuleInit {
       if (state === 'deleteOrder') {
         if (msg.text == 'Да, уверен') {
           await this.userService.saveOrderDone(userTelegramId, true);
-          if (await this.orderService.get(userTelegramId)) {
-            const nextWeekDates = await this.getNextWeekDates();
+          const nextWeekDates = await getNextWeekDates();
+          if (await this.orderService.getNextWeek(userTelegramId, nextWeekDates)) {
             await this.orderService.del(userTelegramId, nextWeekDates);
+            await this.sendMainKeyboard(userTelegramId);
+            await this.userService.saveOrderDone(userTelegramId, false);
+            await this.bot.sendMessage(
+              userTelegramId,
+              'Ваш текущий заказ удалён.\nТеперь вы можете составить новый заказ.',
+            );
+
+            await this.sendMainKeyboard(userTelegramId);
           }
-          await this.userService.saveOrderDone(userTelegramId, false);
-          await this.bot.sendMessage(
-            userTelegramId,
-            'Ваш текущий заказ удалён.\nТеперь вы можете составить новый заказ.',
-          );
+        } else {
+          await this.sendMainKeyboard(userTelegramId);
         }
-        await this.sendMainKeyboard(userTelegramId);
         return;
       }
       const date = new Date();
-      const zzz = date.getDay();
-      if (zzz === 1) {
+      const todayDay = date.getDay();
+      if (todayDay !== 5 && todayDay !== 6) {
         await this.bot.sendMessage(userTelegramId, 'Заказы можно делать пятница, суббота');
         await this.sendMainKeyboard(userTelegramId);
         return;
@@ -517,7 +418,7 @@ export class TelegramService implements OnModuleInit {
             Object.keys(secondStepButtons).map((item) => item),
             1,
           );
-          await sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
+          await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
           await this.userService.saveState(userTelegramId, 'orderType');
           return;
         }
@@ -538,7 +439,7 @@ export class TelegramService implements OnModuleInit {
           Object.keys(secondStepButtons).map((item) => item),
           1,
         );
-        await sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
+        await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
         await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
         await this.userService.saveState(userTelegramId, 'orderType');
         return;
@@ -553,9 +454,10 @@ export class TelegramService implements OnModuleInit {
         const messageSecondStep = await secondStepButtons[findMessageIndex as Steps](msg);
         const buttons = await addButtonsToKeyboard(mainActionsButtons, 2);
         const foundState = Object.values(secondStep).find((item) => item.text === message)?.state;
+        if (foundState === 'myOrder') return;
         await this.userService.saveState(userTelegramId, foundState);
-        if (foundState === 'order' || foundState === 'myOrder') return;
-        await sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
+        if (foundState === 'order') return;
+        await this.sendMessageAndKeyboard(userTelegramId, messageSecondStep, buttons);
       }
     });
   }
