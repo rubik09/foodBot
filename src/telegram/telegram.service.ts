@@ -179,7 +179,7 @@ export class TelegramService implements OnModuleInit {
       const nextWeekDates = await getNextWeekDates();
       await this.orderService.del(userTelegramId, nextWeekDates);
     }
-    const mmm = await this.bot.sendPoll(userTelegramId, 'Выбери день', weekDays, {
+    const mmm = await this.bot.sendPoll(userTelegramId, 'Выберите день', weekDays, {
       allows_multiple_answers: true,
       is_anonymous: false,
     });
