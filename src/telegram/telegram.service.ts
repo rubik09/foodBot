@@ -327,6 +327,7 @@ export class TelegramService implements OnModuleInit {
       }
       const state: string = await this.userService.getState(userTelegramId);
 
+      this.logger.log(`id: ${userTelegramId} - state: ${state}`);
       if (weekDaysNumbers.includes(state)) {
         const orderDays: string[] = await this.userService.getOrderDays(userTelegramId);
         const indexDay = orderDays.indexOf(state);
@@ -375,7 +376,6 @@ export class TelegramService implements OnModuleInit {
           const nextWeekDates = await getNextWeekDates();
           if (await this.orderService.getNextWeek(userTelegramId, nextWeekDates)) {
             await this.orderService.del(userTelegramId, nextWeekDates);
-            await this.sendMainKeyboard(userTelegramId);
             await this.userService.saveOrderDone(userTelegramId, false);
             await this.bot.sendMessage(
               userTelegramId,
@@ -420,7 +420,6 @@ export class TelegramService implements OnModuleInit {
       }
       if (userData.state === 'start') {
         const findMessage = await this.findMessageIndex(mainMessages, message);
-        this.logger.log(findMessage, userTelegramId);
         if (findMessage < 0) {
           await this.sendMainKeyboard(userTelegramId);
           return;
@@ -430,7 +429,7 @@ export class TelegramService implements OnModuleInit {
           1,
         );
         await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
-        await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
+        const aa = await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
         await this.userService.saveState(userTelegramId, 'orderType');
         return;
       }
