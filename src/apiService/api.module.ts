@@ -1,6 +1,5 @@
-import { Global, Module, forwardRef } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { OrderModule } from 'src/telegram/order/order.module';
-import { OrderService } from 'src/telegram/order/order.service';
 import { UserModule } from 'src/telegram/user/user.module';
 import { ApiController } from './api.controller';
 import { ApiService } from './api.service';

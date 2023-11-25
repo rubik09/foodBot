@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OrderService } from 'src/telegram/order/order.service';
 import { UserService } from 'src/telegram/user/user.service';
-import { httpResponceMessages } from '../utils/messages';
 
 @Injectable()
 export class ApiService {
@@ -10,7 +9,6 @@ export class ApiService {
   constructor(private readonly orderService: OrderService, private readonly userService: UserService) {}
 
   async getOrdersByType(data: string) {
-    console.log(data);
     const result = await this.orderService.getByOrderType(data);
     const filteredArray = result.map(({ userTelegramId, salad, soup, hotDish, extra, date, ...rest }) => {
       return { userTelegramId, salad, soup, hotDish, extra, date };

@@ -82,9 +82,6 @@ export class TelegramService implements OnModuleInit {
     this.bot.sendMessage(userTelegramId, botMainMessage.firstMessage, {
       reply_markup: markup,
     });
-
-    const st = await this.userService.getState(userTelegramId);
-    console.log(st, userTelegramId, 'asfasfasf');
   }
 
   async showMenu() {
@@ -205,8 +202,6 @@ export class TelegramService implements OnModuleInit {
     }
     await this.sendMainKeyboard(userTelegramId);
 
-    const st = await this.userService.getState(userTelegramId);
-    console.log(st, userTelegramId, '2222');
     return 'Возвращаемся в главное меню';
   }
 
@@ -231,9 +226,7 @@ export class TelegramService implements OnModuleInit {
 
   async getAllOrders(userTelegramId: number): Promise<string> {
     const nextWeekDates = await getNextWeekDates();
-    console.log(nextWeekDates);
     const orders = await this.orderService.getNextWeek(userTelegramId, nextWeekDates);
-    console.log(orders, 'dsfdfsdfsfsfs');
     if (!orders[0]) return '';
     return await formatOrders(orders);
   }
@@ -322,9 +315,6 @@ export class TelegramService implements OnModuleInit {
 
       const message = msg?.text?.toString();
       const userTelegramId = msg.from.id;
-
-      const st = await this.userService.getState(userTelegramId);
-      console.log(st, userTelegramId, '3333');
       const userData = await this.userService.getUser(userTelegramId);
       if (!userData) return;
       const pollId = await this.userService.getPollId(userTelegramId);
@@ -430,7 +420,7 @@ export class TelegramService implements OnModuleInit {
       }
       if (userData.state === 'start') {
         const findMessage = await this.findMessageIndex(mainMessages, message);
-        console.log(findMessage);
+        this.logger.log(findMessage, userTelegramId);
         if (findMessage < 0) {
           await this.sendMainKeyboard(userTelegramId);
           return;
