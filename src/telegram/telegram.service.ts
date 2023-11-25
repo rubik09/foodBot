@@ -17,13 +17,13 @@ import {
   weekDays,
 } from './telegram.constants';
 import { addButtonsToKeyboard } from './utils/addButtonsToKeyboard';
-import { botMainMessage } from 'src/utils/messages';
+import { botMainMessage } from '../utils/messages';
 import { Cron } from '@nestjs/schedule';
 import { createDailyMenuPoll, formatOrders, parseOrder } from './utils/ordersParsing';
 import { formatMenu, printMenuForDay } from './utils/menuParsing';
 import { getNextWeekDates } from './utils/getWeekDays';
 import { parsePrices } from './utils/priceParsing';
-import { Order } from 'src/schemas/order.schema';
+import { Order } from '../schemas/order.schema';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -429,7 +429,7 @@ export class TelegramService implements OnModuleInit {
           1,
         );
         await this.sendMessageAndKeyboard(userTelegramId, mainMessages[findMessage].text2, buttons);
-        const aa = await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
+        await this.userService.saveOrderType(userTelegramId, mainMessages[findMessage].orderType);
         await this.userService.saveState(userTelegramId, 'orderType');
         return;
       }
