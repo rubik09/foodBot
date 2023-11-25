@@ -3,15 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type OrderDocument = HydratedDocument<Order>;
 
-class Salad {
-  name: string;
-  quantity: number;
-}
-class Soup {
-  name: string;
-  quantity: number;
-}
-class HotDish {
+class Dish {
   name: string;
   quantity: number;
 }
@@ -21,13 +13,13 @@ export class Order {
   userTelegramId: number;
 
   @Prop()
-  salad: Salad;
+  salad: Dish;
 
   @Prop()
-  soup: Soup;
+  soup: Dish;
 
   @Prop()
-  hotDish: HotDish;
+  hotDish: Dish;
 
   @Prop()
   extra: string;

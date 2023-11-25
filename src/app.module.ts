@@ -14,6 +14,7 @@ import { UpdateMenuModule } from './actionsUpdater/update-menu.module';
 import { ConfigService } from '@nestjs/config';
 import { UpdatePriceModule } from './buttonsUpdater/update-price.module';
 import { ApiModule } from './apiService/api.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -34,6 +35,8 @@ import { ApiModule } from './apiService/api.module';
     UserModule,
     UpdateMenuModule,
     UpdatePriceModule,
+    ScheduleModule.forRoot(),
+
     // UpdateActionsModule,
   ],
   providers: [

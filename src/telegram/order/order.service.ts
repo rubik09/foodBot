@@ -26,6 +26,13 @@ export class OrderService {
   async get(userTelegramId: number): Promise<Order[] | null> {
     return await this.orderModel.find({ userTelegramId });
   }
+  async getByDate(today: string): Promise<Order[] | null> {
+    return await this.orderModel
+      .find({
+        date: today,
+      })
+      .exec();
+  }
 
   async del(userTelegramId: number, datesToDelete: string[]): Promise<any> {
     return await this.orderModel.deleteMany({ userTelegramId, date: { $in: datesToDelete } });

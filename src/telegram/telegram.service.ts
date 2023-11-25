@@ -12,6 +12,7 @@ import { Order } from '../schemas/order.schema';
 import { addButtonsToKeyboard } from './utils/addButtonsToKeyboard';
 import { sendMessageAndKeyboard } from './utils/sendMessageAndKeyboard';
 import { botMainMessage } from 'src/utils/messages';
+import { Cron } from '@nestjs/schedule';
 @Injectable()
 export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
@@ -24,6 +25,30 @@ export class TelegramService implements OnModuleInit {
     private configService: ConfigService,
   ) {
     this.bot = new TelegramBot(this.configService.get('app-config.BOT_TOKEN'), { polling: true });
+  }
+
+  @Cron('0 10 * * 1-5', { timeZone: 'UTC' })
+  async sendNotifications() {
+    console.log('Начинается рассылка по заказам');
+    const today = new Date();
+    let counter = 0;
+    try {
+      const ordersToday = await this.orderService.getByDate(today.toISOString().split('T')[0]);
+
+      for (const order of ordersToday) {
+        const orderDone = await this.userService.getOrderDone(order.userTelegramId);
+        if (orderDone) {
+          const parsedOrder = await this.parseOrder(order);
+          const message = `Ваш заказ на сегодня:\n${parsedOrder}`;
+          await this.bot.sendMessage(order.userTelegramId, message);
+          counter += 1;
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка при поиске заказов:', error);
+    }
+
+    console.log(`Рассылка отправлена. Количество: ${counter}`);
   }
 
   async sendMainKeyboard(userTelegramId: number) {
@@ -283,24 +308,31 @@ export class TelegramService implements OnModuleInit {
     await sendMessageAndKeyboard(userTelegramId, 'Подтверждаете заказ?', buttons);
     await this.bot.sendMessage(userTelegramId, orders);
   }
+  async parseOrder(order: Order, enableePrice = true) {
+    let result = '';
+    result += `\nДата: ${order.date}\n`;
+    if (order.salad.name) {
+      result += `${order.salad.name}: ${order.salad.quantity}\n`;
+    }
+    if (order.soup.name) {
+      result += `${order.soup.name}: ${order.soup.quantity}\n`;
+    }
+    if (order.hotDish.name) {
+      result += `${order.hotDish.name}: ${order.hotDish.quantity}\n`;
+    }
+    result += `Дополнение: ${order.extra || '-'}\n`;
+    if (enableePrice) {
+      result += `Цена: ${order.price}\n\n`;
+    }
+    return result;
+  }
 
   async formatOrders(orders: Order[]): Promise<string> {
     let result = '';
     result += `Место: ${orders[0].orderType}\n`;
 
-    orders.forEach((order) => {
-      result += `\nДата: ${order.date}\n`;
-      if (order.salad.name) {
-        result += `${order.salad.name}: ${order.salad.quantity}\n`;
-      }
-      if (order.soup.name) {
-        result += `${order.soup.name}: ${order.soup.quantity}\n`;
-      }
-      if (order.hotDish.name) {
-        result += `${order.hotDish.name}: ${order.hotDish.quantity}\n`;
-      }
-      result += `Дополнение: ${order.extra || '-'}\n`;
-      result += `Цена: ${order.price}\n\n`;
+    orders.forEach(async (order) => {
+      result += await this.parseOrder(order);
     });
 
     const totalCost = orders.reduce((acc, order) => acc + order.price, 0);
