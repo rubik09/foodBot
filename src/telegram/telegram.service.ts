@@ -29,7 +29,7 @@ export class TelegramService implements OnModuleInit {
 
   @Cron('0 10 * * 1-5', { timeZone: 'UTC' })
   async sendNotifications() {
-    console.log('Начинается рассылка по заказам');
+    this.logger.log('Начинается рассылка по заказам');
     const today = new Date();
     let counter = 0;
     try {
@@ -45,10 +45,10 @@ export class TelegramService implements OnModuleInit {
         }
       }
     } catch (error) {
-      console.error('Ошибка при поиске заказов:', error);
+      this.logger.error('Ошибка при поиске заказов:', error);
     }
 
-    console.log(`Рассылка отправлена. Количество: ${counter}`);
+    this.logger.log(`Рассылка отправлена. Количество: ${counter}`);
   }
 
   async sendMainKeyboard(userTelegramId: number) {
