@@ -43,6 +43,8 @@ export class TelegramService implements OnModuleInit {
     this.logger.log('Начинается рассылка по заказам');
     const today = new Date();
     let counter = 0;
+
+    const startTime = new Date();
     try {
       const ordersToday = await this.orderService.getByDate(today.toISOString().split('T')[0]);
 
@@ -59,7 +61,10 @@ export class TelegramService implements OnModuleInit {
       this.logger.error('Ошибка при поиске заказов:', error);
     }
 
-    this.logger.log(`Рассылка отправлена. Количество: ${counter}`);
+    const endTime = new Date();
+    const duration = (endTime.getTime() - startTime.getTime()) / 1000;
+
+    this.logger.log(`Рассылка отправлена. Количество: ${counter}. Время: ${duration} сек.`);
   }
 
   async sendMessageAndKeyboard(userTelegramId: number, text: string, buttons: { text: string }[][]) {
@@ -452,6 +457,7 @@ export class TelegramService implements OnModuleInit {
   }
   async onModuleInit() {
     await this.handleUpdates();
+    await this.sendNotifications();
     this.logger.log('Bot started successfully');
   }
 }
